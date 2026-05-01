@@ -19,3 +19,10 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - run: npm test
+      - name: Verify action bundle is current
+        run: |
+          if ! git diff --quiet actions/check/dist; then
+            echo "::error::actions/check/dist is out of date — run 'npm run build --workspace=@envmanifest/action-check' and commit the result"
+            git diff actions/check/dist
+            exit 1
+          fi

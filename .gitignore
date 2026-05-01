@@ -7,6 +7,10 @@ dist/
 build/
 *.tsbuildinfo
 
+# Exception: GitHub Actions need the bundled runtime committed
+!actions/*/dist/
+!actions/*/dist/**
+
 # Test artifacts
 coverage/
 .nyc_output/

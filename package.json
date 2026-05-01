@@ -11,7 +11,8 @@
     "url": "https://github.com/adam-scott-thomas/envmanifest.git"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "actions/*"
   ],
   "engines": {
     "node": ">=20"

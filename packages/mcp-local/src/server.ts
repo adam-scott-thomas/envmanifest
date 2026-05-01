@@ -96,16 +96,31 @@ const ExplainZ = z.object({ name: z.string() });
 const ResolveSourceZ = z.object({ name: z.string(), env: z.string() });
 
 export async function startServer(opts: { cwd: string }): Promise<void> {
-  const manifest = await loadManifest(opts.cwd);
-  if (!manifest) {
+  const initialManifest = await loadManifest(opts.cwd);
+  let warmCtx: ToolContext | null = null;
+  if (initialManifest) {
+    warmCtx = {
+      manifest: initialManifest,
+      policy: resolvePolicy(initialManifest),
+    };
+  } else {
     console.error(
       `envmanifest-mcp: no manifest.yml found at ${opts.cwd}. ` +
-        `Run 'envmanifest init' first.`,
+        `Server is starting anyway; tool calls will fail until you 'envmanifest init' or run from a directory with a manifest.`,
     );
-    process.exit(1);
   }
-  const policy = resolvePolicy(manifest);
-  const ctx: ToolContext = { manifest, policy };
+
+  async function getCtx(): Promise<ToolContext | { error: string }> {
+    if (warmCtx) return warmCtx;
+    const manifest = await loadManifest(opts.cwd);
+    if (!manifest) {
+      return {
+        error: `no manifest.yml found at ${opts.cwd}. Run 'envmanifest init' first, or launch the MCP server from a project that has one.`,
+      };
+    }
+    warmCtx = { manifest, policy: resolvePolicy(manifest) };
+    return warmCtx;
+  }
 
   const server = new Server(
     { name: SERVER_NAME, version: SERVER_VERSION },
@@ -113,6 +128,7 @@ export async function startServer(opts: { cwd: string }): Promise<void> {
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
+    const policy = warmCtx?.policy ?? resolvePolicy(null);
     const tools = TOOL_DEFINITIONS.filter((t) =>
       isToolAllowed(policy, t.name),
     );
@@ -121,7 +137,12 @@ export async function startServer(opts: { cwd: string }): Promise<void> {
 
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
     const { name, arguments: args } = req.params;
-    if (!isToolAllowed(policy, name)) {
+    const ctxOrError = await getCtx();
+    if ("error" in ctxOrError) {
+      return errorResult(ctxOrError.error);
+    }
+    const ctx = ctxOrError;
+    if (!isToolAllowed(ctx.policy, name)) {
       return errorResult(`tool '${name}' is not allowed by current MCP policy`);
     }
 

@@ -12,7 +12,8 @@
   },
   "workspaces": [
     "packages/*",
-    "actions/*"
+    "actions/*",
+    "site"
   ],
   "engines": {
     "node": ">=20"

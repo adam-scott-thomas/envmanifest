@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "envmanifest-site",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-05-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "routes": [
+    { "pattern": "env.ghostlogic.tech/*", "custom_domain": true }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

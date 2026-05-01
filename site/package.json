@@ -1,0 +1,21 @@
+{
+  "name": "@envmanifest/site",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cloudflare Worker that serves env.ghostlogic.tech — schema files, .well-known endpoints, and a tiny landing page.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsup src/worker.ts --format esm --target esnext --clean --out-dir dist",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@envmanifest/schema": "*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240502.0",
+    "wrangler": "^3.50.0"
+  }
+}

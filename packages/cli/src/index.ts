@@ -7,7 +7,7 @@ import { exampleCommand } from "./commands/example.js";
 
 const VERSION = "0.0.0";
 
-export function run(argv: string[]): void {
+export async function run(argv: string[]): Promise<void> {
   const cli = cac("envmanifest");
 
   cli
@@ -43,5 +43,5 @@ export function run(argv: string[]): void {
   cli.version(VERSION);
   cli.parse(argv, { run: false });
 
-  void cli.runMatchedCommand();
+  await cli.runMatchedCommand();
 }

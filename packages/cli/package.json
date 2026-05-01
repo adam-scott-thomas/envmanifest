@@ -1,0 +1,35 @@
+{
+  "name": "envmanifest",
+  "version": "0.0.0",
+  "description": "Declare your app's config contract once. Validate code, CI, local files, and deployed providers.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "envmanifest": "./bin/envmanifest.js",
+    "envm": "./bin/envmanifest.js"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@envmanifest/schema": "*",
+    "ajv": "^8.12.0",
+    "cac": "^6.7.14",
+    "kleur": "^4.1.5",
+    "yaml": "^2.4.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

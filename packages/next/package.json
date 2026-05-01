@@ -1,0 +1,27 @@
+{
+  "name": "@envmanifest/next",
+  "version": "0.0.0",
+  "description": "Next.js framework integration for envmanifest.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@envmanifest/node": "*",
+    "@envmanifest/schema": "*"
+  },
+  "peerDependencies": {
+    "next": "^14 || ^15 || ^16"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

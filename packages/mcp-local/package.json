@@ -1,0 +1,24 @@
+{
+  "name": "@envmanifest/mcp-local",
+  "version": "0.0.0",
+  "description": "Local MCP server exposing envmanifest contracts to coding agents. Names + metadata only, never values.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "envmanifest-mcp": "./bin/server.js"
+  },
+  "files": ["dist", "bin"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@envmanifest/schema": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

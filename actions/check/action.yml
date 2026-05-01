@@ -1,0 +1,28 @@
+name: envmanifest check
+description: Reconcile your envmanifest contract against code, .env files, and CI environment.
+author: GhostLogic Tech Company
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  environment:
+    description: Environment name to check (e.g. production, staging).
+    required: false
+    default: production
+  format:
+    description: Output format (text or sarif).
+    required: false
+    default: text
+  manifest:
+    description: Path to manifest.yml.
+    required: false
+    default: manifest.yml
+  fail-on:
+    description: Severity level that should fail the workflow (error, warning, none).
+    required: false
+    default: error
+
+runs:
+  using: node20
+  main: dist/index.js

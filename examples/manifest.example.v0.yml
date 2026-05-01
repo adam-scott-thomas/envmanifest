@@ -1,0 +1,279 @@
+# envmanifest reference — exercises every feature of v0
+# Drop in your repo as manifest.yml and run: envmanifest check
+
+# yaml-language-server: $schema=https://envmanifest.dev/schemas/v0/manifest.schema.json
+
+version: 0
+compatibility: experimental
+project: ghostlogic-api
+
+environments: [local, dev, staging, production]
+
+services:
+  - name: api
+    root: apps/api
+    runtime: node
+    deploy:
+      provider: cloudflare-workers
+      project: ghostlogic-api
+
+  - name: web
+    root: apps/web
+    runtime: node
+    deploy:
+      provider: vercel
+      project: ghostlogic-web
+
+ignore:
+  - "^GITHUB_.*"
+  - "^CI$"
+
+policies:
+  mcp:
+    expose:
+      names: true
+      provider_metadata: true
+      values: false
+    redaction: partial
+    allowed_tools:
+      - list_required
+      - validate
+      - explain_requirement
+      - resolve_source
+    denied_tools:
+      - read_values
+      - mutate_provider
+  scanner:
+    fail_on_dynamic: false
+    languages: [typescript, javascript]
+  seal:
+    min_level: L2
+    format: [envmanifest-v1, in-toto-v1]
+
+resources:
+  # ─────────────────────────────────────────────────────────────
+  # Database secret with cloud resolver and probe
+  # ─────────────────────────────────────────────────────────────
+  - name: DATABASE_URL
+    kind: secret
+    type: url
+    exposure: server
+    phase: [runtime]
+    service: api
+    environments: [local, dev, staging, production]
+    description: "Postgres connection string. Production points to RDS."
+    owner: platform-team
+    sources:
+      - provider: aws-secrets-manager
+        ref: aws-sm://${ENV}/db/url
+        environments: [staging, production]
+      - provider: dotenv
+        environments: [local, dev]
+    validation:
+      mode: metadata
+      max_age: 90d
+    probes:
+      - name: db-connect
+        command: npm run probe:db
+        timeout: 10s
+        environments: [staging, production]
+    rotate_every: 90d
+    tags: [critical, pii]
+
+  # ─────────────────────────────────────────────────────────────
+  # Stripe with mode-dependent rules
+  # ─────────────────────────────────────────────────────────────
+  - name: STRIPE_MODE
+    kind: env
+    type: enum
+    values: [test, live]
+    exposure: server
+    phase: [runtime]
+    service: api
+    environments: [staging, production]
+    default: test
+
+  - name: STRIPE_SECRET_KEY
+    kind: secret
+    type: string
+    exposure: server
+    phase: [runtime]
+    service: api
+    environments: [staging, production]
+    pattern: "^sk_(test|live)_.+"
+    validation:
+      mode: value_local
+      must_match: "^sk_(test|live)_.+"
+    rules:
+      - if: { STRIPE_MODE: live }
+        require_pattern: "^sk_live_"
+        message: "Live Stripe mode requires sk_live_ prefix"
+    rotate_every: 90d
+    tags: [third-party, billing]
+
+  # ─────────────────────────────────────────────────────────────
+  # Public env var, build-and-runtime, embedded in client bundle
+  # ─────────────────────────────────────────────────────────────
+  - name: NEXT_PUBLIC_APP_URL
+    kind: env
+    type: url
+    exposure: public
+    phase: [build, runtime]
+    service: web
+    environments: [local, dev, staging, production]
+    description: "Base URL of the deployed app. Embedded in the Next.js client bundle."
+
+  # ─────────────────────────────────────────────────────────────
+  # CI-only build secret — never present at runtime
+  # ─────────────────────────────────────────────────────────────
+  - name: SENTRY_AUTH_TOKEN
+    kind: secret
+    type: string
+    exposure: ci
+    phase: [build]
+    environments: [staging, production]
+    description: "Used by Sentry CLI during build to upload sourcemaps. Must NOT exist in deployed runtime."
+    sources:
+      - provider: github-actions
+        ref: github-actions://repo/secrets/SENTRY_AUTH_TOKEN
+    validation:
+      mode: presence
+    rotate_every: 180d
+
+  # ─────────────────────────────────────────────────────────────
+  # Cloudflare R2 binding — not an env var, a platform resource
+  # ─────────────────────────────────────────────────────────────
+  - name: ASSETS_BUCKET
+    kind: binding
+    exposure: server
+    phase: [runtime]
+    service: api
+    environments: [staging, production]
+    description: "R2 bucket for user-uploaded assets."
+    binding:
+      provider: cloudflare-r2
+      resource_type: bucket
+      resource_id: ghostlogic-assets-${ENV}
+      permissions: [read, write]
+    validation:
+      mode: metadata
+    tags: [critical, storage]
+
+  # ─────────────────────────────────────────────────────────────
+  # Cloudflare D1 binding
+  # ─────────────────────────────────────────────────────────────
+  - name: SESSIONS_DB
+    kind: binding
+    exposure: server
+    phase: [runtime]
+    service: api
+    environments: [staging, production]
+    binding:
+      provider: cloudflare-d1
+      resource_type: database
+      resource_id: sessions-${ENV}
+      permissions: [read, write]
+
+  # ─────────────────────────────────────────────────────────────
+  # Optional with default
+  # ─────────────────────────────────────────────────────────────
+  - name: LOG_LEVEL
+    kind: env
+    type: enum
+    values: [debug, info, warn, error]
+    exposure: server
+    phase: [runtime]
+    environments: [local, dev, staging, production]
+    default: info
+
+  # ─────────────────────────────────────────────────────────────
+  # Forbidden in production — the foot-cannon
+  # ─────────────────────────────────────────────────────────────
+  - name: SEED_DB
+    kind: env
+    type: bool
+    exposure: server
+    phase: [runtime]
+    environments: [local, dev]
+    never_in: [production]
+    default: false
+    description: "Reseeds the database on boot. NEVER set in production."
+
+  # ─────────────────────────────────────────────────────────────
+  # Renamed var — alias keeps old deploys working
+  # ─────────────────────────────────────────────────────────────
+  - name: REDIS_URL
+    kind: secret
+    type: url
+    exposure: server
+    phase: [runtime]
+    service: api
+    environments: [staging, production]
+    alias: [REDIS_CONNECTION_STRING, CACHE_URL]
+    description: "Redis cluster. Renamed from REDIS_CONNECTION_STRING in 2024."
+
+  # ─────────────────────────────────────────────────────────────
+  # Deprecated with sunset date
+  # ─────────────────────────────────────────────────────────────
+  - name: LEGACY_API_TOKEN
+    kind: secret
+    type: string
+    exposure: server
+    phase: [runtime]
+    environments: [production]
+    required: false
+    deprecated: "Use API_KEY_V2 instead"
+    deprecated_after: "2026-09-01"
+
+  # ─────────────────────────────────────────────────────────────
+  # Conditional requirement via required_if
+  # ─────────────────────────────────────────────────────────────
+  - name: ENABLE_AGENT_MODE
+    kind: env
+    type: bool
+    exposure: server
+    phase: [runtime]
+    environments: [staging, production]
+    default: false
+
+  - name: ANTHROPIC_API_KEY
+    kind: secret
+    type: string
+    exposure: server
+    phase: [runtime]
+    service: api
+    environments: [staging, production]
+    required: false
+    pattern: "^sk-ant-.+"
+    rules:
+      - if: { ENABLE_AGENT_MODE: true }
+        require_env: [staging, production]
+        message: "ANTHROPIC_API_KEY required when ENABLE_AGENT_MODE is true"
+    tags: [third-party, llm]
+
+  # ─────────────────────────────────────────────────────────────
+  # Mutually exclusive resources
+  # ─────────────────────────────────────────────────────────────
+  - name: STRIPE_SECRET_KEY_V1
+    kind: secret
+    type: string
+    exposure: server
+    phase: [runtime]
+    environments: [production]
+    required: false
+    conflicts_with: [STRIPE_SECRET_KEY]
+    deprecated: true
+
+  # ─────────────────────────────────────────────────────────────
+  # Platform-injected — skipped in scanner reconciliation
+  # ─────────────────────────────────────────────────────────────
+  - name: VERCEL_URL
+    kind: env
+    type: url
+    exposure: server
+    phase: [runtime]
+    service: web
+    environments: [staging, production]
+    platform_generated: true
+    required: false
+    description: "Auto-injected by Vercel. Read-only."

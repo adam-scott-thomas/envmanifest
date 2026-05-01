@@ -1,0 +1,509 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://envmanifest.dev/schemas/v0/manifest.schema.json",
+  "title": "envmanifest contract v0 (experimental)",
+  "description": "Vendor-neutral configuration contract for applications. Models env vars, secrets, and platform bindings as a single resource graph. Schema is experimental at v0; v1 will lock after real-world contact.",
+  "type": "object",
+  "required": ["version", "project", "environments", "resources"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 0,
+      "description": "Schema version. v0 = experimental. v1 will lock after validation against real frameworks."
+    },
+    "compatibility": {
+      "enum": ["experimental", "stable"],
+      "default": "experimental",
+      "description": "Stability promise. 'experimental' may break; 'stable' is additive-only."
+    },
+    "project": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Lowercase project identifier. Used in seal payloads and dashboard fleet view."
+    },
+    "environments": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]*$"
+      },
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Declared deployment environments. Common: [local, dev, staging, production]."
+    },
+    "services": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/service" },
+      "description": "Service definitions for monorepos. Resources can scope to a service via 'service' field."
+    },
+    "imports": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional manifest fragments to merge. Behavior reserved for v0.2."
+    },
+    "ignore": {
+      "type": "array",
+      "items": { "type": "string", "format": "regex" },
+      "description": "Regex patterns for resource references to skip during code scanning."
+    },
+    "policies": { "$ref": "#/$defs/policies" },
+    "resources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/resource" },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "service": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "root": {
+          "type": "string",
+          "description": "Path to service root, relative to manifest.yml."
+        },
+        "runtime": {
+          "enum": ["node", "deno", "bun", "python", "go", "rust", "edge", "browser"],
+          "description": "Primary runtime. Drives scanner heuristics."
+        },
+        "deploy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "provider": {
+              "enum": [
+                "vercel",
+                "cloudflare-workers",
+                "cloudflare-pages",
+                "aws-lambda",
+                "aws-ecs",
+                "gcp-cloud-run",
+                "fly",
+                "render",
+                "railway",
+                "netlify",
+                "kubernetes",
+                "self-hosted",
+                "other"
+              ]
+            },
+            "project": { "type": "string", "description": "Provider-side project identifier." }
+          }
+        }
+      }
+    },
+    "resource": {
+      "type": "object",
+      "required": ["name", "kind", "exposure", "phase", "environments"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Resource name. SCREAMING_SNAKE_CASE for env/secret; same convention for bindings for consistency."
+        },
+        "kind": {
+          "enum": ["env", "secret", "binding"],
+          "description": "env: plaintext env var. secret: sensitive value, never logged or embedded. binding: platform-level resource (R2 bucket, D1 db, KV namespace, queue, durable object, service binding)."
+        },
+        "type": {
+          "enum": [
+            "string",
+            "url",
+            "port",
+            "email",
+            "bool",
+            "int",
+            "float",
+            "enum",
+            "regex",
+            "json",
+            "duration"
+          ],
+          "description": "Value type. Required for kind: env/secret. Forbidden for kind: binding."
+        },
+        "exposure": {
+          "enum": ["server", "public", "ci", "client"],
+          "description": "Where this resource is allowed to be visible. server: server-side only. public: safe for client bundle (NEXT_PUBLIC_*, VITE_*). ci: build/CI-time only, not in deployed runtime. client: pure client-side, no server presence."
+        },
+        "phase": {
+          "type": "array",
+          "items": { "enum": ["build", "runtime"] },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "When the resource is needed. Many resources are runtime-only; build-time secrets (Sentry tokens) are build-only; public URLs may be both."
+        },
+        "service": {
+          "type": "string",
+          "description": "Optional. Scopes resource to a named service in 'services'. Omit for repo-wide resources."
+        },
+        "environments": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Environments where this resource is required. Subset of top-level environments."
+        },
+        "required": {
+          "type": "boolean",
+          "default": true,
+          "description": "If false, resource is optional. Loader returns undefined when absent."
+        },
+        "default": {
+          "description": "Default value when unset. Forbidden for kind: secret and kind: binding."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Human-readable purpose. Surfaced in 'envmanifest doctor' and generated .env.example."
+        },
+        "owner": {
+          "type": "string",
+          "description": "Team or individual responsible for this resource. Used in dashboard and audit log."
+        },
+        "pattern": {
+          "type": "string",
+          "format": "regex",
+          "description": "Value must match regex. Only enforceable when validation.mode allows value access."
+        },
+        "values": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Allowed values. Required when type: enum."
+        },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "min_length": { "type": "integer", "minimum": 0 },
+        "max_length": { "type": "integer", "minimum": 1 },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/source" },
+          "description": "Where the value comes from in each environment. First match wins."
+        },
+        "validation": { "$ref": "#/$defs/validation" },
+        "probes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/probe" },
+          "description": "Optional runtime probes that verify the resource is actually usable. Required for seal level L4."
+        },
+        "rotate_every": {
+          "type": "string",
+          "pattern": "^[0-9]+(d|h|m|y)$",
+          "description": "Rotation hint. Surfaced as warning when provider exposes last-updated metadata."
+        },
+        "rules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/rule" }
+        },
+        "never_in": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "description": "Environments where this resource must NOT be set."
+        },
+        "required_if": {
+          "type": "object",
+          "description": "Conditional requirement based on other resources. Equivalent to a single rule with require_env."
+        },
+        "conflicts_with": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Other resources that must not be set when this one is."
+        },
+        "alias": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          },
+          "uniqueItems": true,
+          "description": "Past or alternate names. Loader checks as fallback; CLI surfaces as deprecation warning."
+        },
+        "deprecated": {
+          "oneOf": [
+            { "type": "boolean" },
+            { "type": "string" }
+          ],
+          "description": "Mark as deprecated. Loader still serves; CLI warns."
+        },
+        "deprecated_after": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO date. CLI escalates from warning to error after this date."
+        },
+        "platform_generated": {
+          "type": "boolean",
+          "default": false,
+          "description": "Resource is injected by the platform (e.g. VERCEL_URL, CF_PAGES_COMMIT_SHA). Skipped in scanner reconciliation."
+        },
+        "redaction": {
+          "enum": ["none", "partial", "full"],
+          "default": "full",
+          "description": "How 'envmanifest redact' treats this resource in debug output."
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "description": "Free-form labels. Used for dashboard filtering (e.g. 'pii', 'third-party', 'critical')."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "binding" } } },
+          "then": {
+            "required": ["binding"],
+            "not": { "required": ["type"] }
+          }
+        },
+        {
+          "if": { "properties": { "kind": { "enum": ["env", "secret"] } } },
+          "then": { "required": ["type"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "secret" } } },
+          "then": {
+            "not": { "required": ["default"] },
+            "properties": { "exposure": { "not": { "const": "public" } } }
+          }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "env" }, "exposure": { "const": "public" } } },
+          "then": {
+            "description": "Public env vars must not contain secret values; enforced by kind: env (not secret)."
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "enum" } } },
+          "then": { "required": ["values"] }
+        }
+      ],
+      "properties_extension_for_bindings": {
+        "binding": {
+          "$comment": "Used only when kind: binding. Defined separately below for schema clarity."
+        }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "required": ["provider", "resource_type"],
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "enum": [
+            "cloudflare-r2",
+            "cloudflare-d1",
+            "cloudflare-kv",
+            "cloudflare-queues",
+            "cloudflare-durable-objects",
+            "cloudflare-ai",
+            "cloudflare-service",
+            "aws-s3",
+            "aws-dynamodb",
+            "aws-sqs",
+            "gcp-storage",
+            "gcp-pubsub",
+            "other"
+          ]
+        },
+        "resource_type": {
+          "type": "string",
+          "description": "Provider-specific type. e.g. 'bucket', 'database', 'namespace', 'queue'."
+        },
+        "resource_id": {
+          "type": "string",
+          "description": "Provider-side identifier. e.g. R2 bucket name, D1 database UUID."
+        },
+        "permissions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Required permissions. e.g. ['read', 'write'] for R2."
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["provider"],
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "enum": [
+            "env",
+            "dotenv",
+            "aws-secrets-manager",
+            "aws-ssm",
+            "gcp-secret-manager",
+            "vault",
+            "doppler",
+            "infisical",
+            "1password",
+            "vercel",
+            "cloudflare",
+            "github-actions",
+            "other"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "description": "Provider-specific reference. Examples: aws-sm://prod/db/url, vault://kv/prod/api, vercel://project/env/production."
+        },
+        "environments": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Environments where this source applies. Defaults to all."
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": ["presence", "metadata", "value_local", "probe"],
+          "default": "presence",
+          "description": "presence: name exists. metadata: name + provider metadata (age, scope, environment) match. value_local: value readable locally/in CI for pattern check. probe: validate by safe runtime probe."
+        },
+        "max_age": {
+          "type": "string",
+          "pattern": "^[0-9]+(d|h|m|y)$",
+          "description": "For mode: metadata. Fails if last-updated older than this."
+        },
+        "min_length": { "type": "integer", "minimum": 0 },
+        "must_match": { "type": "string", "format": "regex" }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "required": ["name", "command"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "command": {
+          "type": "string",
+          "description": "Shell command. Exit 0 = pass, nonzero = fail. Run in sandboxed subprocess."
+        },
+        "timeout": {
+          "type": "string",
+          "pattern": "^[0-9]+(s|m)$",
+          "default": "30s"
+        },
+        "environments": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "required": ["if"],
+      "additionalProperties": false,
+      "properties": {
+        "if": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "boolean" },
+              { "type": "number" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "matches": { "type": "string", "format": "regex" },
+                  "in": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            ]
+          }
+        },
+        "require_pattern": { "type": "string", "format": "regex" },
+        "require_value": {},
+        "require_env": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "forbid": { "type": "boolean" },
+        "message": { "type": "string" }
+      }
+    },
+    "policies": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Repo-wide policies for MCP exposure, scanner behavior, and seal generation.",
+      "properties": {
+        "mcp": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "expose": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "names": { "type": "boolean", "default": true },
+                "provider_metadata": { "type": "boolean", "default": false },
+                "values": { "type": "boolean", "default": false }
+              }
+            },
+            "redaction": {
+              "enum": ["none", "partial", "full"],
+              "default": "partial",
+              "description": "How resource names are redacted in MCP responses. partial: shows class (e.g. STRIPE_*), full: shows hash."
+            },
+            "allowed_tools": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "denied_tools": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "scanner": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "fail_on_dynamic": {
+              "type": "boolean",
+              "default": false,
+              "description": "Fail check if scanner finds dynamic env access (e.g. process.env[key])."
+            },
+            "languages": {
+              "type": "array",
+              "items": {
+                "enum": ["typescript", "javascript", "python", "go", "rust"]
+              }
+            }
+          }
+        },
+        "seal": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "min_level": {
+              "enum": ["L0", "L1", "L2", "L3", "L4"],
+              "default": "L0"
+            },
+            "format": {
+              "type": "array",
+              "items": { "enum": ["envmanifest-v1", "in-toto-v1"] },
+              "default": ["envmanifest-v1"]
+            }
+          }
+        }
+      }
+    }
+  }
+}

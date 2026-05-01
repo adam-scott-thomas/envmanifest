@@ -7458,6 +7458,7 @@ var MATCHERS = [
     resolve: (m) => ({
       name: null,
       confidence: "dynamic",
+      // envmanifest-ignore-next-line dynamic-env-name
       note: `dynamic env access: process.env[${(m[1] ?? "").trim()}]`
     })
   },
@@ -7530,6 +7531,11 @@ init_cjs_shims();
 var import_promises = require("fs/promises");
 var import_node_path = require("path");
 var DEFAULT_EXTENSIONS = /* @__PURE__ */ new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
+var DEFAULT_IGNORE_FILE_PATTERNS = [
+  /\.test\.[cm]?[jt]sx?$/,
+  /\.spec\.[cm]?[jt]sx?$/,
+  /\.stories\.[cm]?[jt]sx?$/
+];
 var DEFAULT_IGNORE_DIRS = /* @__PURE__ */ new Set([
   "node_modules",
   ".git",
@@ -7547,7 +7553,13 @@ var DEFAULT_IGNORE_DIRS = /* @__PURE__ */ new Set([
   ".svelte-kit",
   ".astro",
   ".nuxt",
-  ".output"
+  ".output",
+  "tests",
+  "test",
+  "__tests__",
+  "fixtures",
+  "__fixtures__",
+  "__mocks__"
 ]);
 async function* walkSourceFiles(opts) {
   const exts = opts.extensions ?? DEFAULT_EXTENSIONS;
@@ -7573,6 +7585,7 @@ async function* walk(root, dir, exts, ignored) {
     if (dotIdx < 0) continue;
     const ext = name.slice(dotIdx);
     if (!exts.has(ext)) continue;
+    if (DEFAULT_IGNORE_FILE_PATTERNS.some((re) => re.test(name))) continue;
     const absolute = (0, import_node_path.join)(dir, name);
     let info;
     try {
@@ -7625,7 +7638,13 @@ var ManifestNotFoundError = class extends Error {
   }
   path;
 };
-async function loadManifest(cwd) {
+async function loadManifest(cwd, explicitPath) {
+  if (explicitPath) {
+    const full = (0, import_node_path2.isAbsolute)(explicitPath) ? explicitPath : (0, import_node_path2.join)(cwd, explicitPath);
+    const source = await (0, import_promises2.readFile)(full, "utf8");
+    const parsed = (0, import_yaml.parse)(source);
+    return { manifest: parsed, path: full, source };
+  }
   const candidates = ["manifest.yml", "manifest.yaml", ".envmanifest.yml"];
   for (const candidate of candidates) {
     const full = (0, import_node_path2.join)(cwd, candidate);
@@ -7690,7 +7709,9 @@ function dotenvCandidatesFor(env) {
 init_cjs_shims();
 function reconcile(input2) {
   const { env, manifest, refs, dotenvFiles } = input2;
+  const wranglerBindings = input2.wranglerBindings ?? [];
   const findings = [];
+  const wranglerBindingNames = new Set(wranglerBindings.map((b) => b.name));
   const declared = /* @__PURE__ */ new Map();
   const aliases = /* @__PURE__ */ new Map();
   for (const r of manifest.resources ?? []) {
@@ -7727,6 +7748,18 @@ function reconcile(input2) {
     if (!resource.environments?.includes(env)) continue;
     if (resource.platform_generated) continue;
     if (resource.required === false) continue;
+    if (resource.kind === "binding") {
+      if (!wranglerBindingNames.has(name)) {
+        findings.push({
+          severity: "warning",
+          code: "binding.missing",
+          name,
+          message: `${name} declared as binding but missing from wrangler config`,
+          hint: `add it to wrangler.toml/wrangler.jsonc, or change kind`
+        });
+      }
+      continue;
+    }
     const usedInCode = codeRefNames.has(name) || resource.alias?.some((a) => codeRefNames.has(a));
     const presentInDotenv = dotenvNames.has(name) || resource.alias?.some((a) => dotenvNames.has(a));
     if (!usedInCode) {
@@ -7747,6 +7780,16 @@ function reconcile(input2) {
           hint: `add ${name}= to your .env file`
         });
       }
+    }
+  }
+  for (const binding of wranglerBindings) {
+    if (!declared.has(binding.name) && !aliases.has(binding.name)) {
+      findings.push({
+        severity: "warning",
+        code: "binding.undeclared",
+        name: binding.name,
+        message: `${binding.name} bound in wrangler config (${binding.provider}) but not declared in manifest`
+      });
     }
   }
   for (const [name, resource] of declared) {
@@ -7820,6 +7863,26 @@ var RULES = {
       text: "A resource is declared in manifest.yml but no code reference exists. Likely stale."
     },
     defaultConfiguration: { level: "note" }
+  },
+  "binding.missing": {
+    id: "binding.missing",
+    shortDescription: {
+      text: "Binding declared in manifest but missing from wrangler config"
+    },
+    fullDescription: {
+      text: "A kind:binding resource exists in the manifest but no matching binding is declared in wrangler.toml/wrangler.jsonc."
+    },
+    defaultConfiguration: { level: "warning" }
+  },
+  "binding.undeclared": {
+    id: "binding.undeclared",
+    shortDescription: {
+      text: "Wrangler binding not declared in manifest"
+    },
+    fullDescription: {
+      text: "A binding exists in wrangler.toml/wrangler.jsonc but no matching kind:binding resource exists in manifest.yml."
+    },
+    defaultConfiguration: { level: "warning" }
   }
 };
 function renderSarif(opts) {
@@ -7856,7 +7919,7 @@ function severityToSarif(s) {
 }
 
 // src/index.ts
-var TOOL_VERSION = "0.0.0";
+var TOOL_VERSION = "0.1.0";
 function input(name, fallback = "") {
   const upper = name.toUpperCase();
   return process.env[`INPUT_${upper}`] ?? process.env[`INPUT_${upper.replace(/-/g, "_")}`] ?? fallback;

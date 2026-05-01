@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import type { Manifest } from "@envmanifest/schema";
 
@@ -10,11 +10,21 @@ export class ManifestNotFoundError extends Error {
   }
 }
 
-export async function loadManifest(cwd: string): Promise<{
+export async function loadManifest(
+  cwd: string,
+  explicitPath?: string,
+): Promise<{
   manifest: Manifest;
   path: string;
   source: string;
 }> {
+  if (explicitPath) {
+    const full = isAbsolute(explicitPath) ? explicitPath : join(cwd, explicitPath);
+    const source = await readFile(full, "utf8");
+    const parsed = parseYaml(source) as Manifest;
+    return { manifest: parsed, path: full, source };
+  }
+
   const candidates = ["manifest.yml", "manifest.yaml", ".envmanifest.yml"];
   for (const candidate of candidates) {
     const full = join(cwd, candidate);

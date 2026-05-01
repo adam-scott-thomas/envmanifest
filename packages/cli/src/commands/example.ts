@@ -9,12 +9,13 @@ interface ExampleOptions {
   env: string;
   out: string;
   force?: boolean;
+  manifest?: string;
 }
 
 export async function exampleCommand(opts: ExampleOptions): Promise<void> {
   let manifest;
   try {
-    const loaded = await loadManifest(opts.cwd);
+    const loaded = await loadManifest(opts.cwd, opts.manifest);
     manifest = loaded.manifest;
   } catch (err) {
     if (err instanceof ManifestNotFoundError) {

@@ -7,6 +7,7 @@ import { reconcile, type Finding } from "../manifest/reconcile.js";
 interface DoctorOptions {
   cwd: string;
   env?: string;
+  manifest?: string;
 }
 
 const EXPLAIN: Record<string, string> = {
@@ -28,7 +29,7 @@ export async function doctorCommand(opts: DoctorOptions): Promise<void> {
 
   let manifest;
   try {
-    const loaded = await loadManifest(opts.cwd);
+    const loaded = await loadManifest(opts.cwd, opts.manifest);
     manifest = loaded.manifest;
     console.log(kleur.green("✓"), `manifest loaded: ${loaded.path}`);
   } catch (err) {

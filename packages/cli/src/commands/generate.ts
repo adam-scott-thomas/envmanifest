@@ -9,12 +9,13 @@ interface GenerateOptions {
   env: string;
   out: string;
   force?: boolean;
+  manifest?: string;
 }
 
 export async function generateTypesCommand(opts: GenerateOptions): Promise<void> {
   let manifest;
   try {
-    const loaded = await loadManifest(opts.cwd);
+    const loaded = await loadManifest(opts.cwd, opts.manifest);
     manifest = loaded.manifest;
   } catch (err) {
     if (err instanceof ManifestNotFoundError) {

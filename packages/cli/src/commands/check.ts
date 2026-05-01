@@ -14,6 +14,7 @@ const TOOL_VERSION = "0.0.0";
 interface CheckOptions {
   cwd: string;
   env: string;
+  manifest?: string;
   format?: "text" | "sarif";
   output?: string;
   failOn?: "error" | "warning" | "none";
@@ -28,7 +29,7 @@ export async function checkCommand(opts: CheckOptions): Promise<void> {
   let manifest;
   let manifestSource = "";
   try {
-    const loaded = await loadManifest(opts.cwd);
+    const loaded = await loadManifest(opts.cwd, opts.manifest);
     manifest = loaded.manifest;
     manifestSource = loaded.source;
     if (format === "text") console.log(kleur.dim(`manifest: ${loaded.path}`));

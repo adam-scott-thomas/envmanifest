@@ -27,6 +27,7 @@ export async function run(argv: string[]): Promise<void> {
   cli
     .command("check", "reconcile manifest ↔ .env* ↔ code")
     .option("--cwd <dir>", "working directory", { default: process.cwd() })
+    .option("--manifest <path>", "path to manifest file (default: manifest.yml in cwd)")
     .option("--env <name>", "environment to check", { default: "local" })
     .option("--format <fmt>", "output format: text or sarif", { default: "text" })
     .option("--output <path>", "write output to file (sarif format)")
@@ -38,12 +39,14 @@ export async function run(argv: string[]): Promise<void> {
   cli
     .command("doctor", "plain-English diagnosis")
     .option("--cwd <dir>", "working directory", { default: process.cwd() })
+    .option("--manifest <path>", "path to manifest file (default: manifest.yml in cwd)")
     .option("--env <name>", "environment to check")
     .action(doctorCommand);
 
   cli
     .command("example", "regenerate .env.example from manifest")
     .option("--cwd <dir>", "working directory", { default: process.cwd() })
+    .option("--manifest <path>", "path to manifest file (default: manifest.yml in cwd)")
     .option("--env <name>", "environment to render", { default: "local" })
     .option("--out <path>", "output path", { default: ".env.example" })
     .option("--force", "overwrite existing file")
@@ -53,6 +56,7 @@ export async function run(argv: string[]): Promise<void> {
     .command("generate-types", "emit a typed env loader from manifest")
     .alias("gen-types")
     .option("--cwd <dir>", "working directory", { default: process.cwd() })
+    .option("--manifest <path>", "path to manifest file (default: manifest.yml in cwd)")
     .option("--env <name>", "environment to render", { default: "production" })
     .option("--out <path>", "output path", { default: "src/env.ts" })
     .option("--force", "overwrite existing file")

@@ -1,0 +1,19 @@
+{
+  "name": "envmanifest-example-node-cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal Node CLI demonstrating envmanifest end-to-end.",
+  "scripts": {
+    "envm:check": "envmanifest check --env local",
+    "envm:doctor": "envmanifest doctor --env local",
+    "envm:generate": "envmanifest generate-types --env local --out src/env.generated.ts --force",
+    "start": "node --experimental-strip-types src/main.ts"
+  },
+  "dependencies": {
+    "@envmanifest/node": "*"
+  },
+  "devDependencies": {
+    "envmanifest": "*"
+  }
+}

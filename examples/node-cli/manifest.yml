@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://env.ghostlogic.tech/schemas/v0/manifest.schema.json
+
+version: 0
+compatibility: experimental
+project: node-cli-example
+
+environments: [local, production]
+
+resources:
+  - name: GREETING_NAME
+    kind: env
+    type: string
+    exposure: server
+    phase: [runtime]
+    environments: [local, production]
+    description: "Name to greet on startup. Defaults to 'world' if unset."
+    required: false
+    default: world
+
+  - name: API_TOKEN
+    kind: secret
+    type: string
+    exposure: server
+    phase: [runtime]
+    environments: [local, production]
+    description: "Token for the upstream API. Must be set."
+    pattern: "^tok_[a-z0-9]+"
+
+  - name: LOG_LEVEL
+    kind: env
+    type: enum
+    values: [debug, info, warn, error]
+    exposure: server
+    phase: [runtime]
+    environments: [local, production]
+    default: info

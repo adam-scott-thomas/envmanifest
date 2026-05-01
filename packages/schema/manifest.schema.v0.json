@@ -257,6 +257,10 @@
           "items": { "type": "string" },
           "uniqueItems": true,
           "description": "Free-form labels. Used for dashboard filtering (e.g. 'pii', 'third-party', 'critical')."
+        },
+        "binding": {
+          "$ref": "#/$defs/binding",
+          "description": "Platform binding details. Required when kind: binding."
         }
       },
       "allOf": [
@@ -285,15 +289,13 @@
           }
         },
         {
-          "if": { "properties": { "type": { "const": "enum" } } },
+          "if": {
+            "properties": { "type": { "const": "enum" } },
+            "required": ["type"]
+          },
           "then": { "required": ["values"] }
         }
-      ],
-      "properties_extension_for_bindings": {
-        "binding": {
-          "$comment": "Used only when kind: binding. Defined separately below for schema clarity."
-        }
-      }
+      ]
     },
     "binding": {
       "type": "object",

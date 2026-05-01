@@ -1,0 +1,14 @@
+name = "fixture-toml"
+main = "src/index.ts"
+compatibility_date = "2026-05-01"
+
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "toml-bucket"
+
+[[d1_databases]]
+binding = "DB"
+database_id = "deadbeef"
+
+[ai]
+binding = "AI"

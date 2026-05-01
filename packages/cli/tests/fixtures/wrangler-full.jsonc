@@ -1,0 +1,41 @@
+{
+  // Synthetic fixture for wrangler parser tests — covers every binding kind.
+  "name": "fixture-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-01",
+  "vars": {
+    "FROM_EMAIL": "no-reply@example.com"
+  },
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "r2_buckets": [
+    { "binding": "BUCKET", "bucket_name": "fixture-bucket" }
+  ],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "fixture-db", "database_id": "11111111-2222-3333-4444-555555555555" }
+  ],
+  "kv_namespaces": [
+    { "binding": "SESSIONS", "id": "abc123" }
+  ],
+  "queues": {
+    "producers": [
+      { "binding": "JOBS", "queue": "fixture-jobs" }
+    ]
+  },
+  "durable_objects": {
+    "bindings": [
+      { "name": "ROOMS", "class_name": "Room" }
+    ]
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  "vectorize": [
+    { "binding": "EMBEDDINGS", "index_name": "fixture-index" }
+  ],
+  "services": [
+    { "binding": "AUTH_SVC", "service": "auth-worker" }
+  ]
+}

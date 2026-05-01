@@ -4,6 +4,7 @@ import { scanCommand } from "./commands/scan.js";
 import { checkCommand } from "./commands/check.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { exampleCommand } from "./commands/example.js";
+import { generateTypesCommand } from "./commands/generate.js";
 
 const VERSION = "0.0.0";
 
@@ -32,6 +33,7 @@ export async function run(argv: string[]): Promise<void> {
   cli
     .command("doctor", "plain-English diagnosis")
     .option("--cwd <dir>", "working directory", { default: process.cwd() })
+    .option("--env <name>", "environment to check")
     .action(doctorCommand);
 
   cli
@@ -39,7 +41,17 @@ export async function run(argv: string[]): Promise<void> {
     .option("--cwd <dir>", "working directory", { default: process.cwd() })
     .option("--env <name>", "environment to render", { default: "local" })
     .option("--out <path>", "output path", { default: ".env.example" })
+    .option("--force", "overwrite existing file")
     .action(exampleCommand);
+
+  cli
+    .command("generate-types", "emit a typed env loader from manifest")
+    .alias("gen-types")
+    .option("--cwd <dir>", "working directory", { default: process.cwd() })
+    .option("--env <name>", "environment to render", { default: "production" })
+    .option("--out <path>", "output path", { default: "src/env.ts" })
+    .option("--force", "overwrite existing file")
+    .action(generateTypesCommand);
 
   cli.help();
   cli.version(VERSION);

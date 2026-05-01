@@ -28,6 +28,9 @@ export async function run(argv: string[]): Promise<void> {
     .command("check", "reconcile manifest ↔ .env* ↔ code")
     .option("--cwd <dir>", "working directory", { default: process.cwd() })
     .option("--env <name>", "environment to check", { default: "local" })
+    .option("--format <fmt>", "output format: text or sarif", { default: "text" })
+    .option("--output <path>", "write output to file (sarif format)")
+    .option("--fail-on <level>", "fail level: error, warning, none", { default: "error" })
     .action(checkCommand);
 
   cli

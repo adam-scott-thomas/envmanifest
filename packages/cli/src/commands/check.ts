@@ -1,20 +1,31 @@
+import { writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import kleur from "kleur";
 import { scan } from "../scanner/index.js";
 import { loadManifest, ManifestNotFoundError } from "../manifest/load.js";
 import { discoverDotenvFiles } from "../dotenv/parse.js";
 import { reconcile } from "../manifest/reconcile.js";
+import { renderSarif } from "../format/sarif.js";
+
+const TOOL_VERSION = "0.0.0";
 
 interface CheckOptions {
   cwd: string;
   env: string;
+  format?: "text" | "sarif";
+  output?: string;
+  failOn?: "error" | "warning" | "none";
 }
 
 export async function checkCommand(opts: CheckOptions): Promise<void> {
+  const format = opts.format ?? "text";
+  const failOn = opts.failOn ?? "error";
+
   let manifest;
   try {
     const loaded = await loadManifest(opts.cwd);
     manifest = loaded.manifest;
-    console.log(kleur.dim(`manifest: ${loaded.path}`));
+    if (format === "text") console.log(kleur.dim(`manifest: ${loaded.path}`));
   } catch (err) {
     if (err instanceof ManifestNotFoundError) {
       console.error(kleur.red("✗ no manifest.yml found"));
@@ -30,6 +41,26 @@ export async function checkCommand(opts: CheckOptions): Promise<void> {
     discoverDotenvFiles(opts.cwd, opts.env),
   ]);
 
+  const findings = reconcile({
+    env: opts.env,
+    manifest,
+    refs: scanResult.references,
+    dotenvFiles: dotenv.found,
+  });
+
+  if (format === "sarif") {
+    const sarifText = renderSarif({ findings, toolVersion: TOOL_VERSION });
+    if (opts.output) {
+      const outPath = join(opts.cwd, opts.output);
+      await writeFile(outPath, sarifText, "utf8");
+      console.error(`wrote ${outPath}`);
+    } else {
+      process.stdout.write(sarifText + "\n");
+    }
+    if (shouldFail(findings, failOn)) process.exitCode = 1;
+    return;
+  }
+
   if (dotenv.found.length === 0) {
     console.log(kleur.dim(`dotenv: none found for env=${opts.env}`));
   } else {
@@ -44,13 +75,6 @@ export async function checkCommand(opts: CheckOptions): Promise<void> {
     ),
   );
   console.log();
-
-  const findings = reconcile({
-    env: opts.env,
-    manifest,
-    refs: scanResult.references,
-    dotenvFiles: dotenv.found,
-  });
 
   if (findings.length === 0) {
     console.log(kleur.green("✓ manifest is consistent with code and .env files"));
@@ -78,7 +102,18 @@ export async function checkCommand(opts: CheckOptions): Promise<void> {
     ),
   );
 
-  if (errors.length > 0) {
+  if (shouldFail(findings, failOn)) {
     process.exitCode = 1;
   }
+}
+
+function shouldFail(
+  findings: import("../manifest/reconcile.js").Finding[],
+  failOn: "error" | "warning" | "none",
+): boolean {
+  if (failOn === "none") return false;
+  if (failOn === "error") return findings.some((f) => f.severity === "error");
+  return findings.some(
+    (f) => f.severity === "error" || f.severity === "warning",
+  );
 }

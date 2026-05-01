@@ -1,5 +1,5 @@
 import { writeFile, access } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, join, resolve } from "node:path";
 import kleur from "kleur";
 import { scan } from "../scanner/index.js";
 import { draftManifestYaml } from "../manifest/draft.js";
@@ -47,7 +47,7 @@ export async function initCommand(opts: InitOptions): Promise<void> {
     );
   }
 
-  const project = basename(opts.cwd);
+  const project = basename(resolve(opts.cwd));
   const yaml = draftManifestYaml(result.references, {
     project,
     ...(wrangler ? { bindings: wrangler.bindings } : {}),

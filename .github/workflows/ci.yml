@@ -26,3 +26,5 @@ jobs:
             git diff actions/check/dist
             exit 1
           fi
+      - name: Dogfood — envmanifest doctor against this repo
+        run: node packages/cli/bin/envmanifest.js doctor --env ci

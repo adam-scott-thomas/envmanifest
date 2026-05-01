@@ -6,6 +6,8 @@ import { doctorCommand } from "./commands/doctor.js";
 import { exampleCommand } from "./commands/example.js";
 import { generateTypesCommand } from "./commands/generate.js";
 import { verifySealCommand } from "./commands/verify.js";
+import { redactCommand } from "./commands/redact.js";
+import { explainCommand } from "./commands/explain.js";
 
 const VERSION = "0.0.0";
 
@@ -67,6 +69,24 @@ export async function run(argv: string[]): Promise<void> {
     .command("verify-seal <file>", "verify an L0 unsigned report or in-toto Statement offline")
     .option("--cwd <dir>", "working directory", { default: process.cwd() })
     .action((file: string, opts: { cwd: string }) => verifySealCommand(opts, file));
+
+  cli
+    .command("redact <file>", "redact secrets in a file using the manifest's secret list")
+    .option("--cwd <dir>", "working directory", { default: process.cwd() })
+    .option("--manifest <path>", "path to manifest file (default: manifest.yml in cwd)")
+    .option("--out <path>", "write redacted output to file (defaults to stdout)")
+    .option("--in-place", "rewrite the file in place")
+    .action((file: string, opts: { cwd: string; manifest?: string; out?: string; inPlace?: boolean }) =>
+      redactCommand(opts, file),
+    );
+
+  cli
+    .command("explain <name>", "show full metadata for a manifest resource")
+    .option("--cwd <dir>", "working directory", { default: process.cwd() })
+    .option("--manifest <path>", "path to manifest file (default: manifest.yml in cwd)")
+    .action((name: string, opts: { cwd: string; manifest?: string }) =>
+      explainCommand(opts, name),
+    );
 
   cli.help();
   cli.version(VERSION);

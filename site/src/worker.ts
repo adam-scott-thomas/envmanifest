@@ -1,6 +1,6 @@
-import schemaV0 from "@envmanifest/schema/manifest.schema.v0.json" with { type: "json" };
+import { SCHEMA_V0 } from "./generated/schema-v0.js";
 
-const SCHEMA_V0_JSON = JSON.stringify(schemaV0);
+const SCHEMA_V0_JSON = JSON.stringify(SCHEMA_V0);
 const SCHEMA_V0_ETAG = `"v0-${hashLength(SCHEMA_V0_JSON)}"`;
 
 const PLACEHOLDER_SEAL_PUBLIC_KEY =

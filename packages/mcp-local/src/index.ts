@@ -1,8 +1,18 @@
-export const VERSION = "0.0.0";
+export { startServer } from "./server.js";
+export {
+  listRequired,
+  validate,
+  explainRequirement,
+  resolveSource,
+  listMissing,
+  type ToolContext,
+} from "./tools.js";
+export { resolvePolicy, isToolAllowed, type ResolvedPolicy } from "./policy.js";
+export {
+  redactName,
+  isSensitiveName,
+  type RedactionLevel,
+} from "./redact.js";
+export { loadManifest } from "./manifest.js";
 
-export function start(): never {
-  throw new Error(
-    "@envmanifest/mcp-local — not yet implemented (week 3 of MVP). " +
-      "Will expose names + metadata only, never values. Mutating tools default-deny.",
-  );
-}
+export const VERSION = "0.0.0";

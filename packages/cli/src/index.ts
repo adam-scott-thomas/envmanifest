@@ -31,6 +31,8 @@ export async function run(argv: string[]): Promise<void> {
     .option("--format <fmt>", "output format: text or sarif", { default: "text" })
     .option("--output <path>", "write output to file (sarif format)")
     .option("--fail-on <level>", "fail level: error, warning, none", { default: "error" })
+    .option("--report <kind>", "emit unsigned report: l0 or intoto")
+    .option("--report-out <path>", "write report to file (defaults to stdout)")
     .action(checkCommand);
 
   cli

@@ -6,6 +6,8 @@ import { loadManifest, ManifestNotFoundError } from "../manifest/load.js";
 import { discoverDotenvFiles } from "../dotenv/parse.js";
 import { reconcile } from "../manifest/reconcile.js";
 import { renderSarif } from "../format/sarif.js";
+import { buildL0Report } from "../report/l0.js";
+import { buildInTotoStatement } from "../report/intoto.js";
 
 const TOOL_VERSION = "0.0.0";
 
@@ -15,6 +17,8 @@ interface CheckOptions {
   format?: "text" | "sarif";
   output?: string;
   failOn?: "error" | "warning" | "none";
+  report?: "l0" | "intoto";
+  reportOut?: string;
 }
 
 export async function checkCommand(opts: CheckOptions): Promise<void> {
@@ -22,9 +26,11 @@ export async function checkCommand(opts: CheckOptions): Promise<void> {
   const failOn = opts.failOn ?? "error";
 
   let manifest;
+  let manifestSource = "";
   try {
     const loaded = await loadManifest(opts.cwd);
     manifest = loaded.manifest;
+    manifestSource = loaded.source;
     if (format === "text") console.log(kleur.dim(`manifest: ${loaded.path}`));
   } catch (err) {
     if (err instanceof ManifestNotFoundError) {
@@ -47,6 +53,28 @@ export async function checkCommand(opts: CheckOptions): Promise<void> {
     refs: scanResult.references,
     dotenvFiles: dotenv.found,
   });
+
+  if (opts.report) {
+    const presentNames = collectPresentNames(scanResult.references, dotenv.found);
+    const l0 = buildL0Report({
+      manifest,
+      manifestSource,
+      env: opts.env,
+      findings,
+      presentNames,
+      cliVersion: TOOL_VERSION,
+    });
+    const reportObj = opts.report === "intoto" ? buildInTotoStatement({ l0 }) : l0;
+    const reportText = JSON.stringify(reportObj, null, 2);
+    if (opts.reportOut) {
+      const outPath = join(opts.cwd, opts.reportOut);
+      await writeFile(outPath, reportText, "utf8");
+      if (format === "text") console.log(kleur.green("✓"), `wrote ${opts.report} report: ${outPath}`);
+    } else if (format !== "sarif") {
+      process.stdout.write(reportText + "\n");
+      return;
+    }
+  }
 
   if (format === "sarif") {
     const sarifText = renderSarif({ findings, toolVersion: TOOL_VERSION });
@@ -105,6 +133,16 @@ export async function checkCommand(opts: CheckOptions): Promise<void> {
   if (shouldFail(findings, failOn)) {
     process.exitCode = 1;
   }
+}
+
+function collectPresentNames(
+  refs: import("../scanner/types.js").ConfigReference[],
+  dotenvFiles: import("../dotenv/parse.js").DotenvFile[],
+): string[] {
+  const set = new Set<string>();
+  for (const r of refs) if (r.name) set.add(r.name);
+  for (const f of dotenvFiles) for (const n of f.names) set.add(n);
+  return Array.from(set).sort();
 }
 
 function shouldFail(

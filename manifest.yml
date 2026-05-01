@@ -1,0 +1,73 @@
+# envmanifest's own manifest. Yes, we dogfood.
+# yaml-language-server: $schema=https://env.ghostlogic.tech/schemas/v0/manifest.schema.json
+
+version: 0
+compatibility: experimental
+project: envmanifest
+
+environments: [local, ci, production]
+
+policies:
+  scanner:
+    fail_on_dynamic: false
+    languages: [typescript, javascript]
+  mcp:
+    redaction: partial
+    expose:
+      names: true
+      provider_metadata: true
+      values: false
+
+ignore:
+  # Names that shouldn't be flagged at all.
+  - "^INPUT_.*"   # GitHub Action inputs are tracked in action.yml, not the manifest
+  - "^RUNNER_.*"  # GitHub Actions runner metadata
+
+resources:
+  # ─────────────────────────────────────────────────────────────
+  # Platform-injected — the action runtime reads these, we don't supply them
+  # ─────────────────────────────────────────────────────────────
+  - name: GITHUB_OUTPUT
+    kind: env
+    type: string
+    exposure: server
+    phase: [runtime]
+    environments: [ci]
+    platform_generated: true
+    required: false
+    description: "Path to the file used to set workflow outputs from the action."
+
+  - name: GITHUB_WORKSPACE
+    kind: env
+    type: string
+    exposure: server
+    phase: [runtime]
+    environments: [ci]
+    platform_generated: true
+    required: false
+    description: "Workspace path the action operates against."
+
+  # ─────────────────────────────────────────────────────────────
+  # Publish workflow secrets (when we publish to npm + PyPI)
+  # ─────────────────────────────────────────────────────────────
+  - name: NPM_TOKEN
+    kind: secret
+    type: string
+    exposure: ci
+    phase: [build]
+    environments: [ci]
+    required: false
+    description: "Used by .github/workflows/publish-npm.yml to publish @envmanifest/* and envmanifest. Stored as repository secret."
+    rotate_every: 365d
+    tags: [release, third-party]
+
+  - name: PYPI_TOKEN
+    kind: secret
+    type: string
+    exposure: ci
+    phase: [build]
+    environments: [ci]
+    required: false
+    description: "Used by .github/workflows/publish-pypi.yml when the v0.2 Python loader ships. Stored as repository secret."
+    rotate_every: 365d
+    tags: [release, third-party]

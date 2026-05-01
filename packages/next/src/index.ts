@@ -1,7 +1,7 @@
 import { defineEnv, EnvLoadError } from "@envmanifest/node";
 
 export { EnvLoadError };
-export const VERSION = "0.0.0";
+export const VERSION = "0.1.0";
 
 export interface CreateEnvOptions<TServer extends string, TPublic extends string> {
   server: readonly TServer[];

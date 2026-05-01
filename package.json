@@ -1,6 +1,6 @@
 {
   "name": "envmanifest-monorepo",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "The config contract layer for AI-assisted software delivery.",
   "license": "MIT",

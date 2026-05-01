@@ -1,6 +1,6 @@
 {
   "name": "@envmanifest/schema",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "JSON Schema and TypeScript types for the envmanifest contract.",
   "license": "MIT",
   "type": "module",

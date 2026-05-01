@@ -1,6 +1,6 @@
 {
   "name": "envmanifest",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Declare your app's config contract once. Validate code, CI, local files, and deployed providers.",
   "license": "MIT",
   "type": "module",

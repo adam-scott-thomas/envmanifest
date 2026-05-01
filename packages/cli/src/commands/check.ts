@@ -10,7 +10,7 @@ import { buildL0Report } from "../report/l0.js";
 import { buildInTotoStatement } from "../report/intoto.js";
 import { loadWranglerConfig } from "../wrangler/parse.js";
 
-const TOOL_VERSION = "0.0.0";
+const TOOL_VERSION = "0.1.0";
 
 interface CheckOptions {
   cwd: string;

@@ -6,7 +6,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
   "routes": [
-    { "pattern": "env.ghostlogic.tech/*", "custom_domain": true }
+    { "pattern": "env.ghostlogic.tech", "custom_domain": true }
   ],
   "observability": {
     "enabled": true

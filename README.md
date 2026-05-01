@@ -169,6 +169,7 @@ Cloud adapters (Phase 2) will be source-available under BSL 1.1, auto-converting
 ## Status & roadmap
 
 - ✅ Schema v0 (experimental), CLI, runtime loaders, MCP local, GitHub Action, L0 + in-toto unsigned reports
+- ✅ Schema host live at https://env.ghostlogic.tech
 - 🛠 Cloud adapters (Cloudflare Workers, Vercel) — Phase 2
 - 🛠 Signed L2/L3 seals via Blackbox — Phase 2
 - 🛠 Fleet dashboard, audit log, SSO — Team tier

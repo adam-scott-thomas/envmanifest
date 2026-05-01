@@ -1,6 +1,8 @@
 # site
 
-Cloudflare Worker that serves `env.ghostlogic.tech` — schemas, `.well-known` endpoints, and a tiny landing page.
+Cloudflare Worker that serves [env.ghostlogic.tech](https://env.ghostlogic.tech) — schemas, `.well-known` endpoints, and a tiny landing page.
+
+**Status:** live as of 2026-05-01. Probe: `curl https://env.ghostlogic.tech/health` → `ok`.
 
 ## Endpoints
 
@@ -22,25 +24,20 @@ npm run dev          # local wrangler dev
 
 ## Deploy
 
-> **Adam runs this — do not auto-deploy.** It mounts `env.ghostlogic.tech` as a Cloudflare Custom Domain on the `envmanifest-site` Worker. DNS for `env.ghostlogic.tech` must already point to Cloudflare (it does — `ghostlogic.tech` is on Cloudflare).
+`env.ghostlogic.tech` is on Cloudflare and DNS is auto-managed by wrangler via the `custom_domain: true` route. The Worker requires a CF API token with the **"Edit Cloudflare Workers"** template scope (Account: Workers Scripts: Edit + Zone: Workers Routes: Edit + User: User Details: Read). The DNS-only "Cloudflare Zone Edit DNS Token" in `ghostlogic.tech` 1P vault is **not sufficient** — needs the broader Workers token.
 
-```bash
-cd site
+```powershell
+cd D:\lost_marbles\envmanifest\site
 
-# 1. Authenticate. Either log in interactively...
-npx wrangler login
+# Use the broader CF Workers token from 1Password
+$env:CLOUDFLARE_API_TOKEN = (op read "op://ghostlogic.tech/Cloudflare Workers Deploy Token/credential")
+$env:CLOUDFLARE_ACCOUNT_ID = (op read "op://ghostlogic.tech/Cloudflare Account ID/credential")
 
-# ...or use the existing 1Password-stored API token (preferred, unattended):
-export CLOUDFLARE_API_TOKEN=$(op read "op://ghostlogic.tech/Cloudflare Zone Edit DNS Token/credential")
-export CLOUDFLARE_ACCOUNT_ID=$(op read "op://ghostlogic.tech/Cloudflare Account ID/credential")
-# (Verify the actual op:// path in 1Password before running — those are the expected item names.)
-
-# 2. First-time deploy. wrangler will prompt to attach the custom domain.
 npx wrangler deploy
 
-# 3. Verify
-curl -i https://env.ghostlogic.tech/health
-curl -i https://env.ghostlogic.tech/schemas/v0/manifest.schema.json | head
+# Verify
+curl https://env.ghostlogic.tech/health
+curl https://env.ghostlogic.tech/schemas/v0/manifest.schema.json | head
 ```
 
 ## What this is not

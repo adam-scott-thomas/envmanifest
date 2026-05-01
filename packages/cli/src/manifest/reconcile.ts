@@ -1,6 +1,7 @@
 import type { Manifest, ManifestResource } from "@envmanifest/schema";
 import type { ConfigReference } from "../scanner/types.js";
 import type { DotenvFile } from "../dotenv/parse.js";
+import type { WranglerBinding } from "../wrangler/parse.js";
 
 export type FindingSeverity = "error" | "warning" | "info";
 
@@ -17,11 +18,15 @@ export interface ReconcileInput {
   manifest: Manifest;
   refs: ConfigReference[];
   dotenvFiles: DotenvFile[];
+  wranglerBindings?: WranglerBinding[];
 }
 
 export function reconcile(input: ReconcileInput): Finding[] {
   const { env, manifest, refs, dotenvFiles } = input;
+  const wranglerBindings = input.wranglerBindings ?? [];
   const findings: Finding[] = [];
+
+  const wranglerBindingNames = new Set(wranglerBindings.map((b) => b.name));
 
   const declared = new Map<string, ManifestResource>();
   const aliases = new Map<string, string>();
@@ -65,6 +70,19 @@ export function reconcile(input: ReconcileInput): Finding[] {
     if (resource.platform_generated) continue;
     if (resource.required === false) continue;
 
+    if (resource.kind === "binding") {
+      if (!wranglerBindingNames.has(name)) {
+        findings.push({
+          severity: "warning",
+          code: "binding.missing",
+          name,
+          message: `${name} declared as binding but missing from wrangler config`,
+          hint: `add it to wrangler.toml/wrangler.jsonc, or change kind`,
+        });
+      }
+      continue;
+    }
+
     const usedInCode = codeRefNames.has(name) || resource.alias?.some((a) => codeRefNames.has(a));
     const presentInDotenv = dotenvNames.has(name) || resource.alias?.some((a) => dotenvNames.has(a));
 
@@ -87,6 +105,17 @@ export function reconcile(input: ReconcileInput): Finding[] {
           hint: `add ${name}= to your .env file`,
         });
       }
+    }
+  }
+
+  for (const binding of wranglerBindings) {
+    if (!declared.has(binding.name) && !aliases.has(binding.name)) {
+      findings.push({
+        severity: "warning",
+        code: "binding.undeclared",
+        name: binding.name,
+        message: `${binding.name} bound in wrangler config (${binding.provider}) but not declared in manifest`,
+      });
     }
   }
 

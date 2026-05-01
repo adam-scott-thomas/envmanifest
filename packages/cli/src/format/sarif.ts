@@ -67,6 +67,26 @@ const RULES: Record<string, SarifRule> = {
     },
     defaultConfiguration: { level: "note" },
   },
+  "binding.missing": {
+    id: "binding.missing",
+    shortDescription: {
+      text: "Binding declared in manifest but missing from wrangler config",
+    },
+    fullDescription: {
+      text: "A kind:binding resource exists in the manifest but no matching binding is declared in wrangler.toml/wrangler.jsonc.",
+    },
+    defaultConfiguration: { level: "warning" },
+  },
+  "binding.undeclared": {
+    id: "binding.undeclared",
+    shortDescription: {
+      text: "Wrangler binding not declared in manifest",
+    },
+    fullDescription: {
+      text: "A binding exists in wrangler.toml/wrangler.jsonc but no matching kind:binding resource exists in manifest.yml.",
+    },
+    defaultConfiguration: { level: "warning" },
+  },
 };
 
 export interface RenderSarifOptions {

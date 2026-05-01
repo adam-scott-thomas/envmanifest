@@ -179,6 +179,50 @@ describe("reconcile", () => {
     expect(f?.name).toBe("UNUSED");
   });
 
+  it("flags binding.missing when manifest declares a binding not in wrangler", () => {
+    const m = manifest([resource("ASSETS", { kind: "binding" })]);
+    const findings = reconcile({
+      env: "local",
+      manifest: m,
+      refs: [],
+      dotenvFiles: [],
+      wranglerBindings: [],
+    });
+    const f = findings.find((x) => x.code === "binding.missing");
+    expect(f?.name).toBe("ASSETS");
+    expect(f?.severity).toBe("warning");
+  });
+
+  it("does not flag binding.missing when wrangler has the binding", () => {
+    const m = manifest([resource("ASSETS", { kind: "binding" })]);
+    const findings = reconcile({
+      env: "local",
+      manifest: m,
+      refs: [],
+      dotenvFiles: [],
+      wranglerBindings: [
+        { name: "ASSETS", provider: "cloudflare-r2", resource_type: "bucket" },
+      ],
+    });
+    expect(findings.find((x) => x.code === "binding.missing")).toBeUndefined();
+  });
+
+  it("flags binding.undeclared when wrangler binds something not in manifest", () => {
+    const m = manifest([resource("FOO")]);
+    const findings = reconcile({
+      env: "local",
+      manifest: m,
+      refs: [ref("FOO")],
+      dotenvFiles: [{ path: ".env", names: new Set(["FOO"]) }],
+      wranglerBindings: [
+        { name: "DB", provider: "cloudflare-d1", resource_type: "database" },
+      ],
+    });
+    const f = findings.find((x) => x.code === "binding.undeclared");
+    expect(f?.name).toBe("DB");
+    expect(f?.severity).toBe("warning");
+  });
+
   it("sorts findings: errors first, then warnings, then info", () => {
     const m = manifest([resource("A"), resource("B"), resource("C")]);
     const findings = reconcile({

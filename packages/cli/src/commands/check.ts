@@ -8,6 +8,7 @@ import { reconcile } from "../manifest/reconcile.js";
 import { renderSarif } from "../format/sarif.js";
 import { buildL0Report } from "../report/l0.js";
 import { buildInTotoStatement } from "../report/intoto.js";
+import { loadWranglerConfig } from "../wrangler/parse.js";
 
 const TOOL_VERSION = "0.0.0";
 
@@ -43,9 +44,10 @@ export async function checkCommand(opts: CheckOptions): Promise<void> {
     throw err;
   }
 
-  const [scanResult, dotenv] = await Promise.all([
+  const [scanResult, dotenv, wrangler] = await Promise.all([
     scan({ cwd: opts.cwd }),
     discoverDotenvFiles(opts.cwd, opts.env),
+    loadWranglerConfig(opts.cwd),
   ]);
 
   const findings = reconcile({
@@ -53,6 +55,7 @@ export async function checkCommand(opts: CheckOptions): Promise<void> {
     manifest,
     refs: scanResult.references,
     dotenvFiles: dotenv.found,
+    ...(wrangler ? { wranglerBindings: wrangler.bindings } : {}),
   });
 
   if (opts.report) {
@@ -96,6 +99,13 @@ export async function checkCommand(opts: CheckOptions): Promise<void> {
     for (const f of dotenv.found) {
       console.log(kleur.dim(`dotenv: ${f.path} (${f.names.size} names)`));
     }
+  }
+  if (wrangler) {
+    console.log(
+      kleur.dim(
+        `wrangler: ${wrangler.path} (${wrangler.bindings.length} bindings)`,
+      ),
+    );
   }
   console.log(
     kleur.dim(

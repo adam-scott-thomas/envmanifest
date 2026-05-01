@@ -1,9 +1,11 @@
 import type { ConfigReference } from "../scanner/types.js";
+import type { WranglerBinding } from "../wrangler/parse.js";
 import { inferResource } from "./heuristics.js";
 
 export interface DraftOptions {
   project: string;
   environments?: string[];
+  bindings?: WranglerBinding[];
 }
 
 export function draftManifestYaml(
@@ -29,9 +31,27 @@ export function draftManifestYaml(
   lines.push("");
   lines.push(`resources:`);
 
-  if (names.length === 0) {
+  const bindings = opts.bindings ?? [];
+
+  if (names.length === 0 && bindings.length === 0) {
     lines.push(`  []  # no config references detected — add manually as needed`);
     return lines.join("\n") + "\n";
+  }
+
+  for (const binding of bindings) {
+    lines.push(`  - name: ${binding.name}`);
+    lines.push(`    kind: binding`);
+    lines.push(`    exposure: server`);
+    lines.push(`    phase: [runtime]`);
+    lines.push(`    environments: [${environments.map(quote).join(", ")}]`);
+    lines.push(`    binding:`);
+    lines.push(`      provider: ${binding.provider}`);
+    lines.push(`      resource_type: ${binding.resource_type}`);
+    if (binding.resource_id) {
+      lines.push(`      resource_id: ${quote(binding.resource_id)}`);
+    }
+    lines.push(`    # detected in wrangler config`);
+    lines.push("");
   }
 
   for (const name of names) {

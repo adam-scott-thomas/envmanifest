@@ -19,7 +19,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w @envmanifest/schema && npm run build -w @envmanifest/node && npm run build -w @envmanifest/next -w @envmanifest/mcp-local -w envmanifest -w @envmanifest/action-check -w @envmanifest/site",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",

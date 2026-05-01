@@ -64,7 +64,9 @@ See [`examples/manifest.example.v0.yml`](examples/manifest.example.v0.yml) for e
 | `envmanifest doctor` | Plain-English diagnosis |
 | `envmanifest example` | Regenerate `.env.example` from manifest |
 | `envmanifest generate-types` | Emit a typed env loader for your stack |
-| `envm` | Short alias |
+| `envmanifest explain <NAME>` | Full metadata for one resource |
+| `envmanifest redact <file>` | Mask secrets in a file using the manifest's secret list — safe paste-into-bug-reports |
+| `envmanifest verify-seal <file>` | Verify an L0 / in-toto report offline |
 
 ```
 $ envmanifest doctor

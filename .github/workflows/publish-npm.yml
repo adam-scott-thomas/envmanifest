@@ -1,0 +1,66 @@
+name: publish-npm
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Run with --dry-run (no actual publish)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write   # required for npm provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm-publish
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+
+      - name: Verify version is consistent across packages
+        run: |
+          ROOT_VERSION=$(node -p "require('./package.json').version")
+          for pkg in packages/cli packages/schema packages/node packages/next packages/mcp-local; do
+            PKG_VERSION=$(node -p "require('./${pkg}/package.json').version")
+            if [ "$PKG_VERSION" != "$ROOT_VERSION" ]; then
+              echo "::error::version mismatch — root=$ROOT_VERSION  $pkg=$PKG_VERSION"
+              exit 1
+            fi
+          done
+          echo "all packages at $ROOT_VERSION"
+
+      - name: Publish — dry run
+        if: github.event_name == 'workflow_dispatch' && inputs.dry-run == true
+        run: |
+          for pkg in packages/schema packages/node packages/next packages/mcp-local packages/cli; do
+            echo "::group::dry-run publish $pkg"
+            (cd $pkg && npm publish --provenance --access public --dry-run)
+            echo "::endgroup::"
+          done
+
+      - name: Publish — real
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry-run == false)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          # publish in dependency order: schema first (no internal deps), node next, then next + mcp-local + cli
+          for pkg in packages/schema packages/node packages/next packages/mcp-local packages/cli; do
+            echo "::group::publish $pkg"
+            (cd $pkg && npm publish --provenance --access public)
+            echo "::endgroup::"
+          done

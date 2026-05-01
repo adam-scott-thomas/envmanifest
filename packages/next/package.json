@@ -10,13 +10,16 @@
   "files": ["dist"],
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {
     "@envmanifest/node": "*",
     "@envmanifest/schema": "*"
+  },
+  "devDependencies": {
+    "vitest": "^1.4.0"
   },
   "peerDependencies": {
     "next": "^14 || ^15 || ^16"

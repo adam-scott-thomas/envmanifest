@@ -176,7 +176,7 @@ See [`docs/spec-v0.md`](docs/spec-v0.md) for the full spec.
 ## Known v0 limits
 
 - TypeScript / JavaScript scanner only. Python in v0.2.
-- Cloudflare bindings (`wrangler.toml` / `wrangler.jsonc`) must be declared in `manifest.yml` manually for now — auto-discovery is on the roadmap.
+- Cloudflare binding auto-discovery covers `wrangler.toml` / `wrangler.jsonc` for: r2_buckets, d1_databases, kv_namespaces, queues.producers, durable_objects, ai, vectorize, hyperdrive, analytics_engine_datasets, services, assets. Other providers' platform configs (Vercel, AWS) are still manual.
 - Schema v0 → v1 transition will lock after real-world contact with Next.js, Vite, Express/Fastify, Django, FastAPI, Cloudflare Workers, Vercel, GitHub Actions, Docker Compose, monorepos.
 
 ## License

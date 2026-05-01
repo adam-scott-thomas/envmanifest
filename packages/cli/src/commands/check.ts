@@ -1,5 +1,5 @@
 import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import kleur from "kleur";
 import { scan } from "../scanner/index.js";
 import { loadManifest, ManifestNotFoundError } from "../manifest/load.js";
@@ -68,7 +68,7 @@ export async function checkCommand(opts: CheckOptions): Promise<void> {
     const reportObj = opts.report === "intoto" ? buildInTotoStatement({ l0 }) : l0;
     const reportText = JSON.stringify(reportObj, null, 2);
     if (opts.reportOut) {
-      const outPath = join(opts.cwd, opts.reportOut);
+      const outPath = isAbsolute(opts.reportOut) ? opts.reportOut : join(opts.cwd, opts.reportOut);
       await writeFile(outPath, reportText, "utf8");
       if (format === "text") console.log(kleur.green("✓"), `wrote ${opts.report} report: ${outPath}`);
     } else if (format !== "sarif") {
@@ -80,7 +80,7 @@ export async function checkCommand(opts: CheckOptions): Promise<void> {
   if (format === "sarif") {
     const sarifText = renderSarif({ findings, toolVersion: TOOL_VERSION });
     if (opts.output) {
-      const outPath = join(opts.cwd, opts.output);
+      const outPath = isAbsolute(opts.output) ? opts.output : join(opts.cwd, opts.output);
       await writeFile(outPath, sarifText, "utf8");
       console.error(`wrote ${outPath}`);
     } else {

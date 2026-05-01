@@ -5,6 +5,7 @@ import { checkCommand } from "./commands/check.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { exampleCommand } from "./commands/example.js";
 import { generateTypesCommand } from "./commands/generate.js";
+import { verifySealCommand } from "./commands/verify.js";
 
 const VERSION = "0.0.0";
 
@@ -61,6 +62,11 @@ export async function run(argv: string[]): Promise<void> {
     .option("--out <path>", "output path", { default: "src/env.ts" })
     .option("--force", "overwrite existing file")
     .action(generateTypesCommand);
+
+  cli
+    .command("verify-seal <file>", "verify an L0 unsigned report or in-toto Statement offline")
+    .option("--cwd <dir>", "working directory", { default: process.cwd() })
+    .action((file: string, opts: { cwd: string }) => verifySealCommand(opts, file));
 
   cli.help();
   cli.version(VERSION);

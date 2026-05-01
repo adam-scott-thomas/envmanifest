@@ -51,6 +51,19 @@ const PLATFORM_INJECTED = new Set([
   "HOME",
   "USER",
   "PATH",
+  "GITHUB_ACTIONS",
+  "GITHUB_WORKSPACE",
+  "GITHUB_OUTPUT",
+  "GITHUB_ENV",
+  "GITHUB_REPOSITORY",
+  "GITHUB_SHA",
+  "GITHUB_REF",
+  "GITHUB_RUN_ID",
+  "GITHUB_TOKEN",
+  "CI",
+  "RUNNER_OS",
+  "RUNNER_TEMP",
+  "RUNNER_ARCH",
 ]);
 
 const URL_PATTERNS = [/_URL$/, /_URI$/, /_ENDPOINT$/, /_HOST$/];

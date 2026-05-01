@@ -3,6 +3,12 @@ import { join, relative, sep } from "node:path";
 
 const DEFAULT_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 
+const DEFAULT_IGNORE_FILE_PATTERNS = [
+  /\.test\.[cm]?[jt]sx?$/,
+  /\.spec\.[cm]?[jt]sx?$/,
+  /\.stories\.[cm]?[jt]sx?$/,
+];
+
 const DEFAULT_IGNORE_DIRS = new Set([
   "node_modules",
   ".git",
@@ -21,6 +27,12 @@ const DEFAULT_IGNORE_DIRS = new Set([
   ".astro",
   ".nuxt",
   ".output",
+  "tests",
+  "test",
+  "__tests__",
+  "fixtures",
+  "__fixtures__",
+  "__mocks__",
 ]);
 
 export interface WalkOptions {
@@ -62,6 +74,7 @@ async function* walk(
     if (dotIdx < 0) continue;
     const ext = name.slice(dotIdx);
     if (!exts.has(ext)) continue;
+    if (DEFAULT_IGNORE_FILE_PATTERNS.some((re) => re.test(name))) continue;
 
     const absolute = join(dir, name);
     let info: Awaited<ReturnType<typeof stat>>;

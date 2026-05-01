@@ -50,6 +50,7 @@ export const MATCHERS: MatcherDef[] = [
     resolve: (m) => ({
       name: null,
       confidence: "dynamic",
+      // envmanifest-ignore-next-line dynamic-env-name
       note: `dynamic env access: process.env[${(m[1] ?? "").trim()}]`,
     }),
   },

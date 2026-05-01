@@ -13,6 +13,8 @@ export async function run(argv: string[]): Promise<void> {
   cli
     .command("init", "scan code, draft manifest.yml")
     .option("--cwd <dir>", "working directory", { default: process.cwd() })
+    .option("--force", "overwrite existing manifest.yml")
+    .option("--out <path>", "output filename", { default: "manifest.yml" })
     .action(initCommand);
 
   cli

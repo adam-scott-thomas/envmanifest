@@ -47,6 +47,25 @@ resources:
     required: false
     description: "Workspace path the action operates against."
 
+  - name: CI
+    kind: env
+    type: string
+    exposure: server
+    phase: [runtime]
+    environments: [ci]
+    platform_generated: true
+    required: false
+    description: "Set to 'true' by all major CI runners (GitHub Actions, GitLab CI, etc.). envmanifest init reads this to detect non-interactive mode and refuse to mash multi-component repos."
+
+  - name: ENVMANIFEST_NON_INTERACTIVE
+    kind: env
+    type: string
+    exposure: server
+    phase: [runtime]
+    environments: [local, ci]
+    required: false
+    description: "Explicit override that forces 'envmanifest init' into non-interactive mode (refuse-to-mash on multi-component repos). Useful when running outside CI but in a script that shouldn't prompt."
+
   # ─────────────────────────────────────────────────────────────
   # Publish workflow secrets (when we publish to npm + PyPI)
   # ─────────────────────────────────────────────────────────────

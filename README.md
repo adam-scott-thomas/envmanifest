@@ -4,7 +4,9 @@
 
 Declare your app's config once. Reconcile it across code, local files, CI, and deployed providers. Generate signed attestations of what was actually deployed. Free CLI for local checks. Paid cloud adapters and signed seals for deployed config.
 
-> **Status:** schema v0 (experimental). MVP CLI ships before any paid features.
+> **v0.1 — JavaScript / TypeScript scanner only.** Python scanner ships in v0.2.
+> Best fit today: single-project repos. Multi-component monorepos in v0.2.
+> Cloud adapters in Phase 2 (paid). See [ROADMAP.md](ROADMAP.md).
 
 ```bash
 # inside a project
@@ -169,12 +171,13 @@ Cloud adapters (Phase 2) will be source-available under BSL 1.1, auto-converting
 ## Status & roadmap
 
 - ✅ Schema v0 (experimental), CLI, runtime loaders, MCP local, GitHub Action, L0 + in-toto unsigned reports
-- ✅ Schema host live at https://env.ghostlogic.tech
-- 🛠 Cloud adapters (Cloudflare Workers, Vercel) — Phase 2
+- ✅ Project home + schema host live at <https://env.ghostlogic.tech>
+- 🛠 Python scanner, dotenv fallback, multi-component repos — v0.2 (~2 weeks)
+- 🛠 Cloud adapters (Cloudflare Workers, Vercel) — Phase 2 (paid)
 - 🛠 Signed L2/L3 seals via Blackbox — Phase 2
 - 🛠 Fleet dashboard, audit log, SSO — Team tier
 
-See [`docs/spec-v0.md`](docs/spec-v0.md) for the full spec.
+See [`ROADMAP.md`](ROADMAP.md), [`docs/v0.2-plan.md`](docs/v0.2-plan.md), and [`docs/spec-v0.md`](docs/spec-v0.md).
 
 ## Known v0 limits
 

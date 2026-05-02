@@ -23,6 +23,27 @@ Every coding agent burns 20+ turns guessing env-var names because no machine-rea
 
 `envmanifest` fills the gap with one file at the repo root that names every env var, secret, and platform binding the app needs — scoped by environment, phase, exposure, and service.
 
+## Service prefixes
+
+Many config conventions share a prefix: Next.js exposes `NEXT_PUBLIC_*` to the browser bundle, Vite uses `VITE_*`, Expo uses `EXPO_PUBLIC_*`, pydantic-settings projects often use a per-app prefix like `POAW_*`. Rather than forcing every resource to embed the prefix in its name, declare it once on the service:
+
+```yaml
+services:
+  - name: web
+    runtime: node
+    env_prefix: NEXT_PUBLIC_
+
+resources:
+  - name: APP_URL          # raw resource name in the manifest
+    service: web
+    type: url
+    exposure: public
+    # effective env var name is NEXT_PUBLIC_APP_URL — applied everywhere:
+    # reconcile, doctor, generate-types, MCP, .env files
+```
+
+`envmanifest init` auto-detects common prefixes (NEXT_PUBLIC_, VITE_, EXPO_PUBLIC_, REACT_APP_, etc.) and emits a service block automatically. Custom prefixes shared by 3+ resources also trigger the heuristic. Aliases on a resource are *not* prefixed — they're plain alternates.
+
 ## What's in the contract
 
 ```yaml

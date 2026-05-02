@@ -1,12 +1,14 @@
 # Roadmap
 
-## Shipped — v0.1 (npm)
+## Shipped — v0.1.2 (npm)
 
 - TypeScript / JavaScript scanner with confidence levels (`exact` / `template` / `dynamic`)
 - Commands: `init`, `scan`, `check`, `doctor`, `example`, `generate-types`, `explain`, `redact`, `verify-seal`
+- **Service-level `env_prefix`** — declare `NEXT_PUBLIC_`, `VITE_`, `POAW_`, etc. once on a service; reconcile, doctor, generate-types, MCP all apply it. `init` auto-detects common prefixes (3+ name threshold for custom).
+- **CI-safe multi-component refusal** — `init` in non-interactive mode (`CI=true` or non-TTY) refuses to mash a multi-component repo into one manifest, exits 2 with actionable instructions.
 - `@envmanifest/node` runtime loader (typed, fail-loud)
 - `@envmanifest/next` framework integration with server / client leak guards
-- `@envmanifest/mcp-local` MCP server for Claude Code, Cursor, and other MCP-aware coding agents — names + metadata only, never values
+- `@envmanifest/mcp-local` MCP server for Claude Code, Cursor, and other MCP-aware coding agents — names + metadata only, never values; effective + raw names returned when service prefix applies
 - GitHub Action with SARIF output for code-scanning
 - Cloudflare `wrangler.toml` / `wrangler.jsonc` binding parser (R2, D1, KV, queues, durable objects, AI, vectorize, hyperdrive, services, assets)
 - L0 unsigned reports + in-toto Statement v1 prototype
@@ -16,7 +18,7 @@
 
 See [docs/v0.2-plan.md](docs/v0.2-plan.md). Ranked priorities:
 
-1. **Python scanner** — stdlib (`os.environ`, `os.getenv`), pydantic-settings BaseSettings, django-environ. Three of five test projects are Python-primary; v0.2 unblocks them.
+1. **Python scanner** — stdlib (`os.environ`, `os.getenv`), pydantic-settings BaseSettings field detection, django-environ. With v0.1.2's `env_prefix` already shipped, the Python scanner can stay regex-only — no AST traversal of pydantic `Config` classes needed; users declare the prefix in the manifest. Three of five test projects are Python-primary; v0.2 unblocks them.
 2. **Dotenv fallback for `init`** — when scanner returns 0 references but `.env*` exists, draft from dotenv names. Adds a `confidence: exact | inferred | dynamic` field to the manifest schema.
 3. **Multi-env file precedence** — `.env.{env}.local > .env.local > .env.{env} > .env`, with attribution per name in `doctor` output.
 4. **Multi-component repo detection + `workspace.yml`** — refuse to mash a Python+TS+Rust monorepo into one root manifest; offer to generate `workspace.yml` pointing at per-component manifests.

@@ -175,6 +175,7 @@ claude mcp add envmanifest --scope user -- envmanifest-mcp</pre>
   <h2 style="margin-top: 0;">v0.1 scope</h2>
   <ul>
     <li>JavaScript / TypeScript scanner</li>
+    <li>Service-level <code>env_prefix</code> (NEXT_PUBLIC_, VITE_, custom)</li>
     <li>Cloudflare <code>wrangler.toml</code> / <code>.jsonc</code> binding parser</li>
     <li>L0 unsigned + in-toto Statement reports</li>
     <li>Local MCP server</li>

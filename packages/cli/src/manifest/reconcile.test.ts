@@ -29,11 +29,15 @@ function resource(
   };
 }
 
-function manifest(resources: ManifestResource[]): Manifest {
+function manifest(
+  resources: ManifestResource[],
+  services?: Manifest["services"],
+): Manifest {
   return {
     version: 0,
     project: "test",
     environments: ["local", "production"],
+    ...(services ? { services } : {}),
     resources,
   };
 }
@@ -221,6 +225,97 @@ describe("reconcile", () => {
     const f = findings.find((x) => x.code === "binding.undeclared");
     expect(f?.name).toBe("DB");
     expect(f?.severity).toBe("warning");
+  });
+
+  it("env_prefix: matches code reference against effective name", () => {
+    const m = manifest(
+      [resource("DATABASE_URL", { service: "api" })],
+      [{ name: "api", env_prefix: "POAW_" }],
+    );
+    const findings = reconcile({
+      env: "local",
+      manifest: m,
+      refs: [ref("POAW_DATABASE_URL")],
+      dotenvFiles: [{ path: ".env", names: new Set(["POAW_DATABASE_URL"]) }],
+    });
+    expect(findings.find((f) => f.code === "code.undeclared")).toBeUndefined();
+    expect(findings.find((f) => f.code === "manifest.unused")).toBeUndefined();
+    expect(findings.find((f) => f.code === "dotenv.missing")).toBeUndefined();
+  });
+
+  it("env_prefix: dotenv.missing reports the effective name, not the raw name", () => {
+    const m = manifest(
+      [resource("DATABASE_URL", { service: "api" })],
+      [{ name: "api", env_prefix: "POAW_" }],
+    );
+    const findings = reconcile({
+      env: "local",
+      manifest: m,
+      refs: [],
+      dotenvFiles: [{ path: ".env", names: new Set() }],
+    });
+    const f = findings.find((x) => x.code === "dotenv.missing");
+    expect(f?.name).toBe("POAW_DATABASE_URL");
+    expect(f?.message).toContain("POAW_DATABASE_URL");
+    expect(f?.hint).toContain("POAW_DATABASE_URL=");
+  });
+
+  it("env_prefix: aliases are NOT prefixed (plain alternates)", () => {
+    const m = manifest(
+      [
+        resource("DATABASE_URL", {
+          service: "api",
+          alias: ["LEGACY_DB_URL"],
+        }),
+      ],
+      [{ name: "api", env_prefix: "POAW_" }],
+    );
+    // code references the legacy alias literally — no prefix
+    const findings = reconcile({
+      env: "local",
+      manifest: m,
+      refs: [ref("LEGACY_DB_URL")],
+      dotenvFiles: [{ path: ".env", names: new Set(["LEGACY_DB_URL"]) }],
+    });
+    expect(findings.find((f) => f.code === "code.undeclared")).toBeUndefined();
+    expect(
+      findings.find((f) => f.code === "dotenv.undeclared"),
+    ).toBeUndefined();
+  });
+
+  it("env_prefix: unused declared resource reports effective name", () => {
+    const m = manifest(
+      [
+        resource("DATABASE_URL", { service: "api" }),
+        resource("UNUSED_VAR", { service: "api" }),
+      ],
+      [{ name: "api", env_prefix: "POAW_" }],
+    );
+    const findings = reconcile({
+      env: "local",
+      manifest: m,
+      refs: [ref("POAW_DATABASE_URL")],
+      dotenvFiles: [
+        { path: ".env", names: new Set(["POAW_DATABASE_URL", "POAW_UNUSED_VAR"]) },
+      ],
+    });
+    const unused = findings.find((f) => f.code === "manifest.unused");
+    expect(unused?.name).toBe("POAW_UNUSED_VAR");
+  });
+
+  it("env_prefix: code reference without the prefix is flagged as undeclared", () => {
+    const m = manifest(
+      [resource("DATABASE_URL", { service: "api" })],
+      [{ name: "api", env_prefix: "POAW_" }],
+    );
+    const findings = reconcile({
+      env: "local",
+      manifest: m,
+      refs: [ref("DATABASE_URL")], // raw name, NOT prefixed — should fail
+      dotenvFiles: [{ path: ".env", names: new Set(["POAW_DATABASE_URL"]) }],
+    });
+    const f = findings.find((x) => x.code === "code.undeclared");
+    expect(f?.name).toBe("DATABASE_URL");
   });
 
   it("sorts findings: errors first, then warnings, then info", () => {

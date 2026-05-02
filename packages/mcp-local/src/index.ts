@@ -15,4 +15,4 @@ export {
 } from "./redact.js";
 export { loadManifest } from "./manifest.js";
 
-export const VERSION = "0.1.0";
+export const VERSION = "0.1.1";

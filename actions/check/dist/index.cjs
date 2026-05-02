@@ -7919,7 +7919,7 @@ function severityToSarif(s) {
 }
 
 // src/index.ts
-var TOOL_VERSION = "0.1.0";
+var TOOL_VERSION = "0.1.1";
 function input(name, fallback = "") {
   const upper = name.toUpperCase();
   return process.env[`INPUT_${upper}`] ?? process.env[`INPUT_${upper.replace(/-/g, "_")}`] ?? fallback;

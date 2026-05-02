@@ -1,6 +1,6 @@
 {
   "name": "@envmanifest/action-check",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "envmanifest GitHub Action — wraps `envmanifest check` with SARIF output and inline annotations.",
   "license": "MIT",

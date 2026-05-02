@@ -9,7 +9,7 @@ import { verifySealCommand } from "./commands/verify.js";
 import { redactCommand } from "./commands/redact.js";
 import { explainCommand } from "./commands/explain.js";
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 
 export async function run(argv: string[]): Promise<void> {
   const cli = cac("envmanifest");

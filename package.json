@@ -1,11 +1,11 @@
 {
   "name": "envmanifest-monorepo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "The config contract layer for AI-assisted software delivery.",
   "license": "MIT",
   "author": "GhostLogic Tech Company",
-  "homepage": "https://github.com/adam-scott-thomas/envmanifest",
+  "homepage": "https://env.ghostlogic.tech",
   "repository": {
     "type": "git",
     "url": "https://github.com/adam-scott-thomas/envmanifest.git"

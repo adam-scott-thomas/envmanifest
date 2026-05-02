@@ -7,7 +7,7 @@ import { discoverDotenvFiles } from "../../../packages/cli/src/dotenv/parse.js";
 import { reconcile, type Finding } from "../../../packages/cli/src/manifest/reconcile.js";
 import { renderSarif } from "../../../packages/cli/src/format/sarif.js";
 
-const TOOL_VERSION = "0.1.0";
+const TOOL_VERSION = "0.1.1";
 
 function input(name: string, fallback = ""): string {
   const upper = name.toUpperCase();

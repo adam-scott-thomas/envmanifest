@@ -37,3 +37,17 @@ export function resourcesFor(
     return true;
   });
 }
+
+/**
+ * Effective name = service.env_prefix + resource.name when both are set,
+ * otherwise just resource.name. Aliases are NOT prefixed (plain alternates).
+ */
+export function effectiveName(
+  resource: ManifestResource,
+  manifest: Manifest,
+): string {
+  if (!resource.service) return resource.name;
+  const svc = manifest.services?.find((s) => s.name === resource.service);
+  if (!svc?.env_prefix) return resource.name;
+  return svc.env_prefix + resource.name;
+}

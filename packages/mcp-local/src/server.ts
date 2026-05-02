@@ -17,13 +17,13 @@ import {
 } from "./tools.js";
 
 const SERVER_NAME = "envmanifest";
-const SERVER_VERSION = "0.1.1";
+const SERVER_VERSION = "0.1.2";
 
 const TOOL_DEFINITIONS = [
   {
     name: "list_required",
     description:
-      "List required env vars / secrets / bindings for a given environment (and optionally service). Returns names + metadata, never values. Sensitive names are redacted by default.",
+      "List required env vars / secrets / bindings for a given environment (and optionally service). Returns names + metadata, never values. Sensitive names are redacted by default. When a service declares env_prefix, the returned 'name' is the effective (prefixed) name as the runtime sees it; 'raw_name' and 'prefix' are also included for clarity.",
     inputSchema: {
       type: "object",
       properties: {
@@ -36,7 +36,7 @@ const TOOL_DEFINITIONS = [
   {
     name: "validate",
     description:
-      "Validate that a set of present env-var names satisfies the manifest contract for an environment. Returns missing + forbidden + unknown.",
+      "Validate that a set of present env-var names satisfies the manifest contract for an environment. Returns missing + forbidden + unknown. Names compared against effective (env_prefix-applied) manifest names.",
     inputSchema: {
       type: "object",
       properties: {
@@ -50,7 +50,7 @@ const TOOL_DEFINITIONS = [
   {
     name: "explain_requirement",
     description:
-      "Explain a single resource: kind, exposure, phase, type, deprecation, rotation, tags.",
+      "Explain a single resource: kind, exposure, phase, type, deprecation, rotation, tags. Accepts the effective (prefixed) name, the raw manifest name, or any alias. Returns both 'name' (effective) and 'raw_name' / 'prefix' when a service env_prefix applies.",
     inputSchema: {
       type: "object",
       properties: { name: { type: "string" } },

@@ -1,5 +1,5 @@
 import type { Manifest, ManifestResource } from "@envmanifest/schema";
-import { resourcesFor } from "./manifest.js";
+import { resourcesFor, effectiveName } from "./manifest.js";
 import { redactName, type RedactionLevel } from "./redact.js";
 import type { ResolvedPolicy } from "./policy.js";
 
@@ -9,7 +9,12 @@ export interface ToolContext {
 }
 
 interface ResourceSummary {
+  /** Effective name (with service env_prefix applied), redacted per policy. This is what the runtime / .env file actually sees. */
   name: string;
+  /** Raw resource name as written in manifest.yml. Set only when distinct from `name`. */
+  raw_name?: string;
+  /** Service env_prefix in effect, if any. */
+  prefix?: string;
   kind: string;
   exposure: string;
   required?: boolean;
@@ -20,13 +25,19 @@ interface ResourceSummary {
 
 function summarize(
   r: ManifestResource,
+  manifest: Manifest,
   redaction: RedactionLevel,
 ): ResourceSummary {
+  const eff = effectiveName(r, manifest);
   const out: ResourceSummary = {
-    name: redactName(r.name, redaction),
+    name: redactName(eff, redaction),
     kind: r.kind,
     exposure: r.exposure,
   };
+  if (eff !== r.name) {
+    out.raw_name = redactName(r.name, redaction);
+    out.prefix = eff.slice(0, eff.length - r.name.length);
+  }
   if (r.required !== undefined) out.required = r.required;
   if (r.type) out.type = r.type;
   if (r.service) out.service = r.service;
@@ -45,7 +56,7 @@ export function listRequired(
 ): { resources: ResourceSummary[] } {
   const resources = resourcesFor(ctx.manifest, args.env, args.service)
     .filter((r) => r.required !== false)
-    .map((r) => summarize(r, ctx.policy.redaction));
+    .map((r) => summarize(r, ctx.manifest, ctx.policy.redaction));
   return { resources };
 }
 
@@ -67,10 +78,13 @@ export function validate(
   args: ValidateArgs,
 ): ValidateResult {
   const required = resourcesFor(ctx.manifest, args.env, args.service);
-  const declared = new Set<string>();
+
+  // Build effective-name lookup so present-set comparisons match what the
+  // runtime actually sees. Aliases are not prefixed (plain alternates).
+  const declaredEffective = new Set<string>();
   const aliasMap = new Map<string, string>();
   for (const r of ctx.manifest.resources ?? []) {
-    declared.add(r.name);
+    declaredEffective.add(effectiveName(r, ctx.manifest));
     for (const a of r.alias ?? []) aliasMap.set(a, r.name);
   }
 
@@ -80,17 +94,17 @@ export function validate(
 
   for (const r of required) {
     if (r.required === false || r.platform_generated) continue;
-    const has =
-      present.has(r.name) || (r.alias?.some((a) => present.has(a)) ?? false);
-    if (!has) missing.push(redactName(r.name, ctx.policy.redaction));
+    const eff = effectiveName(r, ctx.manifest);
+    const has = present.has(eff) || (r.alias?.some((a) => present.has(a)) ?? false);
+    if (!has) missing.push(redactName(eff, ctx.policy.redaction));
     if (r.never_in?.includes(args.env) && has) {
-      forbidden.push(redactName(r.name, ctx.policy.redaction));
+      forbidden.push(redactName(eff, ctx.policy.redaction));
     }
   }
 
   const unknown: string[] = [];
   for (const name of args.presentNames) {
-    if (!declared.has(name) && !aliasMap.has(name)) {
+    if (!declaredEffective.has(name) && !aliasMap.has(name)) {
       unknown.push(redactName(name, ctx.policy.redaction));
     }
   }
@@ -117,11 +131,15 @@ export function explainRequirement(
   ctx: ToolContext,
   args: ExplainArgs,
 ): ExplainResult {
-  const resource = (ctx.manifest.resources ?? []).find(
-    (r) => r.name === args.name || r.alias?.includes(args.name),
-  );
+  // Match against effective name, raw name, or any alias.
+  const resource = (ctx.manifest.resources ?? []).find((r) => {
+    if (r.name === args.name) return true;
+    if (r.alias?.includes(args.name)) return true;
+    if (effectiveName(r, ctx.manifest) === args.name) return true;
+    return false;
+  });
   if (!resource) return { found: false };
-  const sum = summarize(resource, ctx.policy.redaction);
+  const sum = summarize(resource, ctx.manifest, ctx.policy.redaction);
   return {
     found: true,
     resource: {
@@ -149,9 +167,12 @@ export function resolveSource(
   ctx: ToolContext,
   args: ResolveSourceArgs,
 ): ResolveSourceResult {
-  const resource = (ctx.manifest.resources ?? []).find(
-    (r) => r.name === args.name || r.alias?.includes(args.name),
-  );
+  const resource = (ctx.manifest.resources ?? []).find((r) => {
+    if (r.name === args.name) return true;
+    if (r.alias?.includes(args.name)) return true;
+    if (effectiveName(r, ctx.manifest) === args.name) return true;
+    return false;
+  });
   if (!resource) return { found: false, sources: [] };
 
   const sources = (resource.sources ?? [])

@@ -168,3 +168,55 @@ describe("listMissing", () => {
     expect(out.missing.sort()).toEqual(["B", "C"]);
   });
 });
+
+describe("env_prefix", () => {
+  function withPrefix(): ToolContext {
+    const manifest: Manifest = {
+      version: 0,
+      project: "t",
+      environments: ["local", "production"],
+      services: [{ name: "api", env_prefix: "POAW_" }],
+      resources: [r("DATABASE_URL", { service: "api" })],
+    };
+    return { manifest, policy: resolvePolicy(manifest) };
+  }
+
+  it("listRequired emits effective (prefixed) name as 'name', plus raw_name + prefix", () => {
+    const c = withPrefix();
+    const out = listRequired(c, { env: "local" });
+    expect(out.resources[0]?.name).toBe("POAW_DATABASE_URL");
+    expect(out.resources[0]?.raw_name).toBe("DATABASE_URL");
+    expect(out.resources[0]?.prefix).toBe("POAW_");
+  });
+
+  it("validate compares against effective names (prefix applied)", () => {
+    const c = withPrefix();
+    const present = validate(c, {
+      env: "local",
+      presentNames: ["POAW_DATABASE_URL"],
+    });
+    expect(present.ok).toBe(true);
+    expect(present.missing).toEqual([]);
+
+    const absent = validate(c, {
+      env: "local",
+      presentNames: ["DATABASE_URL"], // raw, not prefixed
+    });
+    expect(absent.ok).toBe(false);
+    expect(absent.missing).toEqual(["POAW_DATABASE_URL"]);
+    expect(absent.unknown).toEqual(["DATABASE_URL"]);
+  });
+
+  it("explain_requirement matches effective, raw, or alias; returns both names", () => {
+    const c = withPrefix();
+    const byEffective = explainRequirement(c, { name: "POAW_DATABASE_URL" });
+    expect(byEffective.found).toBe(true);
+    expect(byEffective.resource?.name).toBe("POAW_DATABASE_URL");
+    expect(byEffective.resource?.raw_name).toBe("DATABASE_URL");
+    expect(byEffective.resource?.prefix).toBe("POAW_");
+
+    const byRaw = explainRequirement(c, { name: "DATABASE_URL" });
+    expect(byRaw.found).toBe(true);
+    expect(byRaw.resource?.name).toBe("POAW_DATABASE_URL");
+  });
+});

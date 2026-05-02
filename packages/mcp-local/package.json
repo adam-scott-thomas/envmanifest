@@ -1,6 +1,6 @@
 {
   "name": "@envmanifest/mcp-local",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Local MCP server exposing envmanifest contracts to coding agents (Claude Code, Cursor, etc). Names + metadata only, never values. Default-deny on mutating tools.",
   "license": "MIT",
   "type": "module",
@@ -45,7 +45,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@envmanifest/schema": "^0.1.2",
+    "@envmanifest/schema": "^0.1.3",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "yaml": "^2.4.1",
     "zod": "^3.23.0"

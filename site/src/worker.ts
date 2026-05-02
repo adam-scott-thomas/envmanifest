@@ -108,31 +108,48 @@ const LANDING_HTML = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>env.ghostlogic.tech — envmanifest schemas</title>
+<title>envmanifest — config contract layer for AI-assisted software</title>
+<meta name="description" content="Declare your app's config once. Reconcile across code, .env files, CI, and deployed providers. Free CLI, MCP server for coding agents, signed config attestations.">
 <style>
-  body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; max-width: 720px; margin: 4rem auto; padding: 0 1.25rem; line-height: 1.5; color: #1a1a1a; }
-  h1 { font-size: 1.4rem; letter-spacing: -0.01em; }
-  code { background: #f3f3f3; padding: 0.1em 0.35em; border-radius: 3px; font-size: 0.95em; }
-  pre { background: #f7f7f7; padding: 0.9rem 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.9rem; }
-  ul { padding-left: 1.2rem; }
-  a { color: #5333ed; }
+  :root { color-scheme: light; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 760px; margin: 3rem auto 6rem; padding: 0 1.25rem; line-height: 1.55; color: #14141a; }
+  h1 { font-size: 1.85rem; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+  h1 small { display: block; font-weight: 400; font-size: 0.95rem; color: #666; margin-top: 0.25rem; letter-spacing: 0; }
+  h2 { font-size: 1.15rem; letter-spacing: -0.01em; margin-top: 2.4rem; margin-bottom: 0.5rem; }
+  p { margin: 0.6rem 0; }
+  code { background: #f2f2f5; padding: 0.1em 0.4em; border-radius: 4px; font-size: 0.9em; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  pre { background: #faf9f7; border: 1px solid #ececef; padding: 0.95rem 1.1rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; line-height: 1.45; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  ul { padding-left: 1.25rem; }
+  li { margin: 0.25rem 0; }
+  a { color: #5333ed; text-decoration: none; }
+  a:hover { text-decoration: underline; }
   .muted { color: #666; font-size: 0.9rem; }
+  .badge { display: inline-block; background: #fff5d6; border: 1px solid #ecd778; color: #6b4f00; padding: 0.1em 0.55em; border-radius: 3px; font-size: 0.78em; font-weight: 500; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem; }
+  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+  hr { border: 0; border-top: 1px solid #ececef; margin: 2.5rem 0; }
 </style>
 </head>
 <body>
-<h1>env.ghostlogic.tech</h1>
-<p>Hosting endpoints for the <strong><a href="https://github.com/adam-scott-thomas/envmanifest">envmanifest</a></strong> contract.</p>
 
-<h2>Endpoints</h2>
-<ul>
-  <li><code>GET /schemas/v0/manifest.schema.json</code> — JSON Schema for v0 manifests</li>
-  <li><code>GET /.well-known/seal-public-key</code> — placeholder for the L1+ signing key (Phase 2)</li>
-  <li><code>GET /health</code> — uptime probe</li>
-</ul>
+<h1>envmanifest <span class="badge">v0.1</span>
+  <small>The config contract layer for AI-assisted software delivery.</small>
+</h1>
 
-<h2>Use in your manifest</h2>
-<pre>
-# yaml-language-server: $schema=https://env.ghostlogic.tech/schemas/v0/manifest.schema.json
+<p>Declare your app's config once. Reconcile it across code, <code>.env</code> files, CI, and deployed providers. Free CLI for local checks. MCP server for coding agents. Verifiable attestations of what was actually deployed.</p>
+
+<h2>Install</h2>
+<pre>npm install -g envmanifest</pre>
+
+<h2>30-second quickstart</h2>
+<pre>cd your-project
+envmanifest init        # scan code, draft manifest.yml
+envmanifest doctor      # plain-English status
+envmanifest check       # CI-shaped reconcile</pre>
+
+<h2>Use the schema in your editor</h2>
+<p>Pin this at the top of your <code>manifest.yml</code> — VS Code's YAML extension and JetBrains JSON Schema support both pick it up:</p>
+<pre># yaml-language-server: $schema=https://env.ghostlogic.tech/schemas/v0/manifest.schema.json
 
 version: 0
 project: my-app
@@ -140,7 +157,57 @@ environments: [local, production]
 resources: []
 </pre>
 
-<p class="muted">Schema is currently <code>v0</code>, experimental. Locks at <code>v1</code> after real-world contact with major frameworks and providers.</p>
+<h2>For coding agents (MCP)</h2>
+<p>Local MCP server exposes the manifest to Claude Code / Cursor / any MCP-aware agent — names + metadata only, never values. Default-deny on mutating tools.</p>
+<pre>npm install -g @envmanifest/mcp-local
+claude mcp add envmanifest --scope user -- envmanifest-mcp</pre>
+
+<h2>For CI (GitHub Action)</h2>
+<pre>- uses: adam-scott-thomas/envmanifest/actions/check@v0.1.1
+  with:
+    environment: production
+    format: sarif</pre>
+
+<hr>
+
+<div class="grid">
+<div>
+  <h2 style="margin-top: 0;">v0.1 scope</h2>
+  <ul>
+    <li>JavaScript / TypeScript scanner</li>
+    <li>Cloudflare <code>wrangler.toml</code> / <code>.jsonc</code> binding parser</li>
+    <li>L0 unsigned + in-toto Statement reports</li>
+    <li>Local MCP server</li>
+    <li>GitHub Action with SARIF</li>
+  </ul>
+</div>
+<div>
+  <h2 style="margin-top: 0;">v0.2 (~2 weeks)</h2>
+  <ul>
+    <li>Python scanner (stdlib + pydantic-settings)</li>
+    <li>Dotenv fallback when scanner is empty</li>
+    <li>Multi-component repo / <code>workspace.yml</code></li>
+    <li>Multi-env file precedence rules</li>
+  </ul>
+</div>
+</div>
+
+<h2>Endpoints on this domain</h2>
+<ul>
+  <li><a href="/schemas/v0/manifest.schema.json"><code>GET /schemas/v0/manifest.schema.json</code></a> — JSON Schema for <code>v0</code> manifests</li>
+  <li><a href="/.well-known/seal-public-key"><code>GET /.well-known/seal-public-key</code></a> — placeholder for the L1+ signing key (Phase 2)</li>
+  <li><a href="/health"><code>GET /health</code></a> — uptime probe</li>
+</ul>
+
+<h2>Source &amp; license</h2>
+<ul>
+  <li><a href="https://github.com/adam-scott-thomas/envmanifest">github.com/adam-scott-thomas/envmanifest</a></li>
+  <li>MIT for OSS components (CLI, runtime, MCP local, schema). Cloud adapters BSL 1.1 → Apache 2.0 after 2 years (Phase 2).</li>
+  <li><a href="https://github.com/adam-scott-thomas/envmanifest/blob/main/docs/v0.2-plan.md">Roadmap</a> · <a href="https://github.com/adam-scott-thomas/envmanifest/issues">Issues</a></li>
+</ul>
+
+<p class="muted" style="margin-top: 3rem;">Schema is currently <code>v0</code>, experimental. Locks at <code>v1</code> after real-world contact with major frameworks and providers (target: 6 months or 100 active users).</p>
+
 </body>
 </html>
 `;

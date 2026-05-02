@@ -1,14 +1,37 @@
 {
   "name": "@envmanifest/next",
-  "version": "0.1.0",
-  "description": "Next.js framework integration for envmanifest.",
+  "version": "0.1.1",
+  "description": "Next.js framework integration for envmanifest. Server / client env split with leak guards — throws if a non-NEXT_PUBLIC_ name accidentally lands in the client bundle.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "homepage": "https://env.ghostlogic.tech",
+  "bugs": {
+    "url": "https://github.com/adam-scott-thomas/envmanifest/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adam-scott-thomas/envmanifest.git",
+    "directory": "packages/next"
+  },
+  "keywords": [
+    "envmanifest",
+    "env",
+    "config",
+    "next.js",
+    "nextjs",
+    "react",
+    "typed-env"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean",
@@ -17,8 +40,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@envmanifest/node": "*",
-    "@envmanifest/schema": "*"
+    "@envmanifest/node": "^0.1.1",
+    "@envmanifest/schema": "^0.1.1"
   },
   "devDependencies": {
     "vitest": "^1.4.0"

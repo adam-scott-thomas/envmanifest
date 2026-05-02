@@ -1,16 +1,41 @@
 {
   "name": "@envmanifest/mcp-local",
-  "version": "0.1.0",
-  "description": "Local MCP server exposing envmanifest contracts to coding agents. Names + metadata only, never values.",
+  "version": "0.1.1",
+  "description": "Local MCP server exposing envmanifest contracts to coding agents (Claude Code, Cursor, etc). Names + metadata only, never values. Default-deny on mutating tools.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "homepage": "https://env.ghostlogic.tech",
+  "bugs": {
+    "url": "https://github.com/adam-scott-thomas/envmanifest/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adam-scott-thomas/envmanifest.git",
+    "directory": "packages/mcp-local"
+  },
+  "keywords": [
+    "envmanifest",
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "claude-code",
+    "cursor",
+    "ai-agents",
+    "env",
+    "config"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "bin": {
     "envmanifest-mcp": "./bin/server.js"
   },
   "files": [
     "dist",
     "bin",
+    "LICENSE",
     "README.md"
   ],
   "scripts": {
@@ -20,7 +45,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@envmanifest/schema": "*",
+    "@envmanifest/schema": "^0.1.1",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "yaml": "^2.4.1",
     "zod": "^3.23.0"

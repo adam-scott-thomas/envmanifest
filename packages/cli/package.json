@@ -1,19 +1,48 @@
 {
   "name": "envmanifest",
-  "version": "0.1.0",
-  "description": "Declare your app's config contract once. Validate code, CI, local files, and deployed providers.",
+  "version": "0.1.1",
+  "description": "The config contract layer for AI-assisted software delivery. Declare your app's config once. Reconcile across code, .env files, CI, and deployed providers. Free CLI; MCP server for coding agents; signed config attestations.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "homepage": "https://env.ghostlogic.tech",
+  "bugs": {
+    "url": "https://github.com/adam-scott-thomas/envmanifest/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adam-scott-thomas/envmanifest.git",
+    "directory": "packages/cli"
+  },
+  "keywords": [
+    "envmanifest",
+    "env",
+    "dotenv",
+    "config",
+    "secrets",
+    "manifest",
+    "validation",
+    "ci",
+    "mcp",
+    "claude-code",
+    "supply-chain",
+    "in-toto",
+    "sarif"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "bin": {
     "envmanifest": "./bin/envmanifest.js",
     "envm": "./bin/envmanifest.js"
   },
   "files": [
     "dist",
-    "bin"
+    "bin",
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean",
@@ -23,7 +52,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@envmanifest/schema": "*",
+    "@envmanifest/schema": "^0.1.1",
     "ajv": "^8.12.0",
     "cac": "^6.7.14",
     "jsonc-parser": "^3.2.0",

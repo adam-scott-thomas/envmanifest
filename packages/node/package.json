@@ -1,14 +1,36 @@
 {
   "name": "@envmanifest/node",
-  "version": "0.1.0",
-  "description": "Typed runtime loader for envmanifest contracts.",
+  "version": "0.1.1",
+  "description": "Typed runtime loader for envmanifest contracts. Validates required env vars at boot, fails loudly on missing, never returns values to coding agents.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "homepage": "https://env.ghostlogic.tech",
+  "bugs": {
+    "url": "https://github.com/adam-scott-thomas/envmanifest/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adam-scott-thomas/envmanifest.git",
+    "directory": "packages/node"
+  },
+  "keywords": [
+    "envmanifest",
+    "env",
+    "dotenv",
+    "config",
+    "runtime",
+    "typed-env"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean",
@@ -20,7 +42,7 @@
     "vitest": "^1.4.0"
   },
   "dependencies": {
-    "@envmanifest/schema": "*"
+    "@envmanifest/schema": "^0.1.1"
   },
   "publishConfig": {
     "access": "public"

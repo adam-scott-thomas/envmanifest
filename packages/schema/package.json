@@ -1,12 +1,31 @@
 {
   "name": "@envmanifest/schema",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "JSON Schema and TypeScript types for the envmanifest contract.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "homepage": "https://env.ghostlogic.tech",
+  "bugs": {
+    "url": "https://github.com/adam-scott-thomas/envmanifest/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adam-scott-thomas/envmanifest.git",
+    "directory": "packages/schema"
+  },
+  "keywords": [
+    "envmanifest",
+    "env",
+    "config",
+    "json-schema",
+    "manifest"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -16,7 +35,9 @@
   },
   "files": [
     "dist",
-    "manifest.schema.v0.json"
+    "manifest.schema.v0.json",
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean",

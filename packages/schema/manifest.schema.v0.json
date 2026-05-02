@@ -73,6 +73,11 @@
           "enum": ["node", "deno", "bun", "python", "go", "rust", "edge", "browser"],
           "description": "Primary runtime. Drives scanner heuristics."
         },
+        "env_prefix": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*_$",
+          "description": "Optional prefix prepended to every resource.name in this service when matching against code references and .env file contents. Resource names in the manifest stay raw (e.g. DATABASE_URL); the effective name as seen by the runtime is env_prefix + name (e.g. POAW_DATABASE_URL). Useful for pydantic-settings env_prefix, Next.js NEXT_PUBLIC_*, Vite VITE_*, Expo EXPO_PUBLIC_*. Aliases on resources are NOT prefixed — they're plain alternates."
+        },
         "deploy": {
           "type": "object",
           "additionalProperties": false,

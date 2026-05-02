@@ -78,6 +78,7 @@ export interface ManifestService {
   name: string;
   root?: string;
   runtime?: string;
+  env_prefix?: string;
   deploy?: {
     provider: string;
     project?: string;

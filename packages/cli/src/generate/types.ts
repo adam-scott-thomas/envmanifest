@@ -1,4 +1,5 @@
 import type { Manifest, ManifestResource } from "@envmanifest/schema";
+import { effectiveName } from "../manifest/reconcile.js";
 
 export interface GenerateTypesOptions {
   env: string;
@@ -22,15 +23,16 @@ export function generateTypesModule(opts: GenerateTypesOptions): string {
   lines.push("");
   lines.push(`export interface Env {`);
   for (const r of required) {
-    lines.push(`  ${tsKey(r.name)}: ${tsType(r)};`);
+    lines.push(`  ${tsKey(effectiveName(r, manifest))}: ${tsType(r)};`);
   }
   for (const r of optional) {
-    lines.push(`  ${tsKey(r.name)}?: ${tsType(r)};`);
+    lines.push(`  ${tsKey(effectiveName(r, manifest))}?: ${tsType(r)};`);
   }
   lines.push(`}`);
   lines.push("");
 
-  lines.push(`const REQUIRED = ${JSON.stringify(required.map((r) => r.name))} as const;`);
+  const requiredEffectiveNames = required.map((r) => effectiveName(r, manifest));
+  lines.push(`const REQUIRED = ${JSON.stringify(requiredEffectiveNames)} as const;`);
   lines.push("");
 
   lines.push(`function readSource(): Record<string, string | undefined> {`);

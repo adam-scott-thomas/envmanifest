@@ -106,8 +106,17 @@ export async function doctorCommand(opts: DoctorOptions): Promise<void> {
     console.log(`${head} ${kleur.bold(code)} (${group.length})`);
     const explain = EXPLAIN[code];
     if (explain) console.log(kleur.dim("  " + explain));
+    const seenPrefixes = new Set<string>();
     for (const f of group.slice(0, 5)) {
-      console.log(kleur.dim(`    – ${f.name ?? "(unnamed)"}: ${f.message}`));
+      let suffix = "";
+      if (f.rawName && f.name && f.rawName !== f.name) {
+        const prefix = f.name.slice(0, f.name.length - f.rawName.length);
+        if (!seenPrefixes.has(prefix)) {
+          suffix = kleur.dim(`  (prefix: ${prefix})`);
+          seenPrefixes.add(prefix);
+        }
+      }
+      console.log(kleur.dim(`    – ${f.name ?? "(unnamed)"}: ${f.message}`) + suffix);
     }
     if (group.length > 5) {
       console.log(kleur.dim(`    – ... ${group.length - 5} more`));

@@ -7707,6 +7707,12 @@ function dotenvCandidatesFor(env) {
 
 // ../../packages/cli/src/manifest/reconcile.ts
 init_cjs_shims();
+function effectiveName(resource, manifest) {
+  if (!resource.service) return resource.name;
+  const svc = manifest.services?.find((s) => s.name === resource.service);
+  if (!svc?.env_prefix) return resource.name;
+  return svc.env_prefix + resource.name;
+}
 function reconcile(input2) {
   const { env, manifest, refs, dotenvFiles } = input2;
   const wranglerBindings = input2.wranglerBindings ?? [];
@@ -7715,8 +7721,9 @@ function reconcile(input2) {
   const declared = /* @__PURE__ */ new Map();
   const aliases = /* @__PURE__ */ new Map();
   for (const r of manifest.resources ?? []) {
-    declared.set(r.name, r);
-    for (const a of r.alias ?? []) aliases.set(a, r.name);
+    const eff = effectiveName(r, manifest);
+    declared.set(eff, r);
+    for (const a of r.alias ?? []) aliases.set(a, eff);
   }
   const codeRefNames = new Set(
     refs.map((r) => r.name).filter((n) => Boolean(n))
@@ -7744,30 +7751,34 @@ function reconcile(input2) {
       });
     }
   }
-  for (const [name, resource] of declared) {
+  for (const [eff, resource] of declared) {
     if (!resource.environments?.includes(env)) continue;
     if (resource.platform_generated) continue;
     if (resource.required === false) continue;
+    const rawName = resource.name;
+    const hasPrefix = eff !== rawName;
     if (resource.kind === "binding") {
-      if (!wranglerBindingNames.has(name)) {
+      if (!wranglerBindingNames.has(eff)) {
         findings.push({
           severity: "warning",
           code: "binding.missing",
-          name,
-          message: `${name} declared as binding but missing from wrangler config`,
+          name: eff,
+          ...hasPrefix && { rawName },
+          message: `${eff} declared as binding but missing from wrangler config`,
           hint: `add it to wrangler.toml/wrangler.jsonc, or change kind`
         });
       }
       continue;
     }
-    const usedInCode = codeRefNames.has(name) || resource.alias?.some((a) => codeRefNames.has(a));
-    const presentInDotenv = dotenvNames.has(name) || resource.alias?.some((a) => dotenvNames.has(a));
+    const usedInCode = codeRefNames.has(eff) || resource.alias?.some((a) => codeRefNames.has(a));
+    const presentInDotenv = dotenvNames.has(eff) || resource.alias?.some((a) => dotenvNames.has(a));
     if (!usedInCode) {
       findings.push({
         severity: "info",
         code: "manifest.unused",
-        name,
-        message: `${name} declared but not referenced in code`
+        name: eff,
+        ...hasPrefix && { rawName },
+        message: `${eff} declared but not referenced in code`
       });
     }
     if (env === "local" || env === "dev" || env === "development") {
@@ -7775,9 +7786,10 @@ function reconcile(input2) {
         findings.push({
           severity: "error",
           code: "dotenv.missing",
-          name,
-          message: `${name} required for env=${env} but missing from .env*`,
-          hint: `add ${name}= to your .env file`
+          name: eff,
+          ...hasPrefix && { rawName },
+          message: `${eff} required for env=${env} but missing from .env*`,
+          hint: `add ${eff}= to your .env file`
         });
       }
     }
@@ -7792,14 +7804,17 @@ function reconcile(input2) {
       });
     }
   }
-  for (const [name, resource] of declared) {
-    if (resource.never_in?.includes(env) && dotenvNames.has(name)) {
+  for (const [eff, resource] of declared) {
+    if (resource.never_in?.includes(env) && dotenvNames.has(eff)) {
+      const rawName = resource.name;
+      const hasPrefix = eff !== rawName;
       findings.push({
         severity: "error",
         code: "policy.forbidden",
-        name,
-        message: `${name} must NOT be set in env=${env}`,
-        hint: resource.description
+        name: eff,
+        ...hasPrefix && { rawName },
+        message: `${eff} must NOT be set in env=${env}`,
+        ...resource.description !== void 0 && { hint: resource.description }
       });
     }
   }
@@ -7919,7 +7934,7 @@ function severityToSarif(s) {
 }
 
 // src/index.ts
-var TOOL_VERSION = "0.1.1";
+var TOOL_VERSION = "0.1.2";
 function input(name, fallback = "") {
   const upper = name.toUpperCase();
   return process.env[`INPUT_${upper}`] ?? process.env[`INPUT_${upper.replace(/-/g, "_")}`] ?? fallback;

@@ -1,6 +1,6 @@
 {
   "name": "envmanifest",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "The config contract layer for AI-assisted software delivery. Declare your app's config once. Reconcile across code, .env files, CI, and deployed providers. Free CLI; MCP server for coding agents; signed config attestations.",
   "license": "MIT",
   "type": "module",
@@ -52,7 +52,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@envmanifest/schema": "^0.1.1",
+    "@envmanifest/schema": "^0.1.2",
     "ajv": "^8.12.0",
     "cac": "^6.7.14",
     "jsonc-parser": "^3.2.0",

@@ -1,6 +1,6 @@
 {
   "name": "@envmanifest/next",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Next.js framework integration for envmanifest. Server / client env split with leak guards — throws if a non-NEXT_PUBLIC_ name accidentally lands in the client bundle.",
   "license": "MIT",
   "type": "module",
@@ -40,8 +40,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@envmanifest/node": "^0.1.1",
-    "@envmanifest/schema": "^0.1.1"
+    "@envmanifest/node": "^0.1.2",
+    "@envmanifest/schema": "^0.1.2"
   },
   "devDependencies": {
     "vitest": "^1.4.0"

@@ -1,6 +1,6 @@
 {
   "name": "@envmanifest/node",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Typed runtime loader for envmanifest contracts. Validates required env vars at boot, fails loudly on missing, never returns values to coding agents.",
   "license": "MIT",
   "type": "module",
@@ -42,7 +42,7 @@
     "vitest": "^1.4.0"
   },
   "dependencies": {
-    "@envmanifest/schema": "^0.1.1"
+    "@envmanifest/schema": "^0.1.2"
   },
   "publishConfig": {
     "access": "public"

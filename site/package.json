@@ -1,6 +1,6 @@
 {
   "name": "@envmanifest/site",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Cloudflare Worker that serves env.ghostlogic.tech — schema files, .well-known endpoints, and a tiny landing page.",
   "license": "MIT",
